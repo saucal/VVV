@@ -2,6 +2,13 @@
 # vi: set ft=ruby :
 
 vagrant_dir = File.expand_path(File.dirname(__FILE__))
+www_dir = "www/"
+database_dir = "database/"
+
+if Dir.exists?(File.join(vagrant_dir,'sync')) then
+	www_dir = "sync/www/"
+	database_dir = "sync/database/"
+end
 
 Vagrant.configure("2") do |config|
 
@@ -164,7 +171,7 @@ Vagrant.configure("2") do |config|
   # a mapped directory inside the VM will be created that contains these files.
   # This directory is used to maintain default database scripts as well as backed
   # up mysql dumps (SQL files) that are to be imported automatically on vagrant up
-  config.vm.synced_folder "database/", "/srv/database"
+  config.vm.synced_folder database_dir, "/srv/database"
 
   # If the mysql_upgrade_info file from a previous persistent database mapping is detected,
   # we'll continue to map that directory as /var/lib/mysql inside the virtual machine. Once
@@ -174,16 +181,16 @@ Vagrant.configure("2") do |config|
   # plugin is installed.
   if File.exists?(File.join(vagrant_dir,'database/data/mysql_upgrade_info')) then
     if vagrant_version >= "1.3.0"
-      config.vm.synced_folder "database/data/", "/var/lib/mysql", :mount_options => [ "dmode=777", "fmode=777" ]
+      config.vm.synced_folder File.join(database_dir,"data/"), "/var/lib/mysql", :mount_options => [ "dmode=777", "fmode=777" ]
     else
-      config.vm.synced_folder "database/data/", "/var/lib/mysql", :extra => 'dmode=777,fmode=777'
+      config.vm.synced_folder File.join(database_dir,"data/"), "/var/lib/mysql", :extra => 'dmode=777,fmode=777'
     end
 
     # The Parallels Provider does not understand "dmode"/"fmode" in the "mount_options" as
     # those are specific to Virtualbox. The folder is therefore overridden with one that
     # uses corresponding Parallels mount options.
     config.vm.provider :parallels do |v, override|
-      override.vm.synced_folder "database/data/", "/var/lib/mysql", :mount_options => []
+      override.vm.synced_folder File.join(database_dir,"data/"), "/var/lib/mysql", :mount_options => []
     end
   end
 
@@ -207,9 +214,9 @@ Vagrant.configure("2") do |config|
   # inside the VM will be created that acts as the default location for nginx sites. Put all
   # of your project files here that you want to access through the web server
   if vagrant_version >= "1.3.0"
-    config.vm.synced_folder "www/", "/srv/www/", :owner => "www-data", :mount_options => [ "dmode=775", "fmode=774" ]
+    config.vm.synced_folder www_dir, "/srv/www/", :owner => "www-data", :mount_options => [ "dmode=775", "fmode=774" ]
   else
-    config.vm.synced_folder "www/", "/srv/www/", :owner => "www-data", :extra => 'dmode=775,fmode=774'
+    config.vm.synced_folder www_dir, "/srv/www/", :owner => "www-data", :extra => 'dmode=775,fmode=774'
   end
 
   config.vm.provision "fix-no-tty", type: "shell" do |s|
@@ -221,7 +228,7 @@ Vagrant.configure("2") do |config|
   # those are specific to Virtualbox. The folder is therefore overridden with one that
   # uses corresponding Parallels mount options.
   config.vm.provider :parallels do |v, override|
-    override.vm.synced_folder "www/", "/srv/www/", :owner => "www-data", :mount_options => []
+    override.vm.synced_folder www_dir, "/srv/www/", :owner => "www-data", :mount_options => []
   end
 
   # The Hyper-V Provider does not understand "dmode"/"fmode" in the "mount_options" as
@@ -229,7 +236,7 @@ Vagrant.configure("2") do |config|
   # replaced with SMB shares. Here we switch all the shared folders to us SMB and then
   # override the www folder with options that make it Hyper-V compatible.
   config.vm.provider :hyperv do |v, override|
-    override.vm.synced_folder "www/", "/srv/www/", :owner => "www-data", :mount_options => ["dir_mode=0775","file_mode=0774","forceuid","noperm","nobrl","mfsymlinks"]
+    override.vm.synced_folder www_dir, "/srv/www/", :owner => "www-data", :mount_options => ["dir_mode=0775","file_mode=0774","forceuid","noperm","nobrl","mfsymlinks"]
     # Change all the folder to use SMB instead of Virtual Box shares
     override.vm.synced_folders.each do |id, options|
       if ! options[:type]

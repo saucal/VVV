@@ -37,7 +37,6 @@ then
 			db_exist=`mysql -u root -proot --skip-column-names -e "$mysql_cmd"`
 			mysql_cmd="\nCREATE DATABASE IF NOT EXISTS \`"$pre_dot"\`;\n GRANT ALL PRIVILEGES ON \`"$pre_dot"\`.* TO 'wp'@'localhost' IDENTIFIED BY 'wp';\n"
 			db_exist=`mysql -u root -proot --skip-column-names -e "$mysql_cmd"`
-			printf "mysql -u root -proot $pre_dot < $pre_dot.sql\n"
 			mysql -u root -proot $pre_dot < $pre_dot.sql
 			printf "  * Import of $pre_dot successful\n"
 		fi

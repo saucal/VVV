@@ -29,7 +29,7 @@ vvv_config['sites'].each do |site, args|
   defaults = Hash.new
   defaults['repo']   = false
   defaults['vm_dir'] = "/srv/www/#{site}"
-  defaults['local_dir'] = File.join(vagrant_dir, 'www', site)
+  defaults['local_dir'] = File.join(vagrant_dir, www_dir, site)
   defaults['branch'] = 'master'
   defaults['skip_provisioning'] = false
   defaults['allow_customfile'] = false
@@ -124,7 +124,7 @@ Vagrant.configure("2") do |config|
   # individual domains separated by whitespace in subdirectories of www/.
   if defined?(VagrantPlugins::HostsUpdater)
     # Recursively fetch the paths to all vvv-hosts files under the www/ directory.
-    paths = Dir[File.join(www_dir, '**', 'vvv-hosts')]
+    paths = Dir[File.join(vagrant_dir, www_dir, '**', 'vvv-hosts')]
 
     # Parse the found vvv-hosts files for host names.
     hosts = paths.map do |path|
@@ -249,7 +249,7 @@ Vagrant.configure("2") do |config|
   end
 
   vvv_config['sites'].each do |site, args|
-    if args['local_dir'] != File.join(vagrant_dir, 'www', site) then
+    if args['local_dir'] != File.join(vagrant_dir, www_dir, site) then
       if vagrant_version >= "1.3.0"
         config.vm.synced_folder args['local_dir'], args['vm_dir'], :owner => "www-data", :mount_options => [ "dmode=775", "fmode=774" ]
       else
@@ -270,7 +270,7 @@ Vagrant.configure("2") do |config|
     override.vm.synced_folder www_dir, "/srv/www/", :owner => "www-data", :mount_options => []
 
     vvv_config['sites'].each do |site, args|
-      if args['local_dir'] != File.join(vagrant_dir, 'www', site) then
+      if args['local_dir'] != File.join(vagrant_dir, www_dir, site) then
         override.vm.synced_folder args['local_dir'], args['vm_dir'], :owner => "www-data", :mount_options => []
       end
     end
@@ -283,7 +283,7 @@ Vagrant.configure("2") do |config|
   config.vm.provider :hyperv do |v, override|
     override.vm.synced_folder www_dir, "/srv/www/", :owner => "www-data", :mount_options => ["dir_mode=0775","file_mode=0774","forceuid","noperm","nobrl","mfsymlinks"]
     vvv_config['sites'].each do |site, args|
-      if args['local_dir'] != File.join(vagrant_dir, 'www', site) then
+      if args['local_dir'] != File.join(vagrant_dir, www_dir, site) then
         override.vm.synced_folder args['local_dir'], args['vm_dir'], :owner => "www-data", :mount_options => ["dir_mode=0775","file_mode=0774","forceuid","noperm","nobrl","mfsymlinks"]
       end
     end

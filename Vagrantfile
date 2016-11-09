@@ -97,7 +97,7 @@ Vagrant.configure("2") do |config|
   # individual domains separated by whitespace in subdirectories of www/.
   if defined?(VagrantPlugins::HostsUpdater)
     # Recursively fetch the paths to all vvv-hosts files under the www/ directory.
-    paths = Dir[File.join(vagrant_dir, 'www', '**', 'vvv-hosts')]
+    paths = Dir[File.join(www_dir, '**', 'vvv-hosts')]
 
     # Parse the found vvv-hosts files for host names.
     hosts = paths.map do |path|

@@ -7,10 +7,19 @@ vagrant_dir = File.expand_path(File.dirname(__FILE__))
 www_dir = "www/"
 database_dir = "database/"
 database_backups_dir = "database_backups/"
+base_config_dir = "config/"
+config_dir = base_config_dir
 
 if Dir.exists?(File.join(vagrant_dir,'sync')) then
-	www_dir = "sync/www/"
-	database_backups_dir = "sync/database_backups/"
+  if Dir.exists?(File.join(vagrant_dir,'sync', 'www'))
+    www_dir = "sync/www/"
+  end
+  if Dir.exists?(File.join(vagrant_dir,'sync', 'database_backups'))
+    database_backups_dir = "sync/database_backups/"
+  end
+  if Dir.exists?(File.join(vagrant_dir,'sync', 'config'))
+    config_dir = "sync/config/"
+  end
 end
 
 vvv_config_file = File.join(vagrant_dir, 'vvv-config.yml')
@@ -231,7 +240,19 @@ Vagrant.configure("2") do |config|
   # a mapped directory inside the VM will be created that contains these files.
   # This directory is currently used to maintain various config files for php and
   # nginx as well as any pre-existing database files.
-  config.vm.synced_folder "config/", "/srv/config"
+  config.vm.synced_folder base_config_dir, "/srv/config"
+
+  if(config_dir != base_config_dir) then
+    # Recursively fetch the paths to all vvv-hosts files under the www/ directory.
+    config_dir_path = File.join(vagrant_dir, config_dir)
+    paths = Dir.entries(config_dir_path).select {|entry| File.directory? File.join(config_dir_path,entry) and !(entry =='.' || entry == '..') }
+
+    # Parse the found vvv-hosts files for host names.
+    paths.each do |entry|
+      # Read line from file and remove line breaks
+      config.vm.synced_folder File.join(config_dir_path, entry), File.join("/srv/config", entry)
+    end # Remove duplicate entries
+  end
 
   # /srv/log/
   #

@@ -5,6 +5,7 @@ require 'yaml'
 
 vagrant_dir = File.expand_path(File.dirname(__FILE__))
 www_dir = "www/"
+merge_www_dir = www_dir
 database_dir = "database/"
 database_backups_dir = "database_backups/"
 base_config_dir = "config/"
@@ -12,7 +13,7 @@ config_dir = base_config_dir
 
 if Dir.exists?(File.join(vagrant_dir,'sync')) then
   if Dir.exists?(File.join(vagrant_dir,'sync', 'www'))
-    www_dir = "sync/www/"
+    merge_www_dir = "sync/www/"
   end
   if Dir.exists?(File.join(vagrant_dir,'sync', 'database_backups'))
     database_backups_dir = "sync/database_backups/"
@@ -136,13 +137,24 @@ Vagrant.configure("2") do |config|
     # Recursively fetch the paths to all vvv-hosts files under the www/ directory.
     paths = Dir[File.join(vagrant_dir, www_dir, '**', 'vvv-hosts')]
 
+    def process_paths(paths)
+      return paths.map do |path|
+        # Read line from file and remove line breaks
+        lines = File.readlines(path).map(&:chomp)
+        # Filter out comments starting with "#"
+        lines.grep(/\A[^#]/)
+      end.flatten.uniq # Remove duplicate entries
+    end
+
+    hosts = []
+
     # Parse the found vvv-hosts files for host names.
-    hosts = paths.map do |path|
-      # Read line from file and remove line breaks
-      lines = File.readlines(path).map(&:chomp)
-      # Filter out comments starting with "#"
-      lines.grep(/\A[^#]/)
-    end.flatten.uniq # Remove duplicate entries
+    hosts += process_paths(paths);
+
+    if merge_www_dir != www_dir
+      paths = Dir[File.join(vagrant_dir, merge_www_dir, '**', 'vvv-hosts')]
+      hosts += process_paths(paths);
+    end
 
     hosts += ['vvv.dev']
 
@@ -271,6 +283,22 @@ Vagrant.configure("2") do |config|
     config.vm.synced_folder www_dir, "/srv/www/", :owner => "www-data", :extra => 'dmode=775,fmode=774'
   end
 
+  merged_www_dirs = []
+
+  if(www_dir != merge_www_dir) then
+    # Recursively fetch the paths to all vvv-hosts files under the www/ directory.
+    base_www_dir_path = File.join(vagrant_dir, www_dir)
+    merge_dir_path = File.join(vagrant_dir, merge_www_dir)
+    paths = Dir.entries(merge_dir_path).select {|entry| File.directory? File.join(merge_dir_path,entry) and !(entry =='.' || entry == '..' || entry =~ /[^a-z0-9\-\_]/i) }
+
+    paths.each do |entry|
+      this_entry_base_path = File.join(base_www_dir_path,entry)
+      next if Dir.exists?(this_entry_base_path) && !(Dir[File.join(this_entry_base_path, "*")].empty?)
+
+      merged_www_dirs += [{'local' => File.join(merge_dir_path, entry), 'remote' => File.join("/srv/www", entry)}]
+    end # Remove duplicate entries
+  end
+
   vvv_config['sites'].each do |site, args|
     if args['local_dir'] != File.join(vagrant_dir, www_dir, site) then
       if vagrant_version >= "1.3.0"
@@ -278,6 +306,14 @@ Vagrant.configure("2") do |config|
       else
         config.vm.synced_folder args['local_dir'], args['vm_dir'], :owner => "www-data", :extra => 'dmode=775,fmode=774'
       end
+    end
+  end
+
+  merged_www_dirs.each do |dir|
+    if vagrant_version >= "1.3.0"
+      config.vm.synced_folder dir['local'], dir['remote'], :owner => "www-data", :mount_options => [ "dmode=775", "fmode=774" ]
+    else
+      config.vm.synced_folder dir['local'], dir['remote'], :owner => "www-data", :extra => 'dmode=775,fmode=774'
     end
   end
 
@@ -296,6 +332,10 @@ Vagrant.configure("2") do |config|
       if args['local_dir'] != File.join(vagrant_dir, www_dir, site) then
         override.vm.synced_folder args['local_dir'], args['vm_dir'], :owner => "www-data", :mount_options => []
       end
+    end
+
+    merged_www_dirs.each do |dir|
+      override.vm.synced_folder dir['local'], dir['remote'], :owner => "www-data", :mount_options => []
     end
   end
 

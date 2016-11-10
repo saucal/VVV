@@ -66,4 +66,4 @@
 /www/default/database-admin/config.inc.custom.php
 
 # No need to share the sync folder either
-/sync/*
+/sync

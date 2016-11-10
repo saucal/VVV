@@ -1,5 +1,5 @@
 ---
-sites:
+sites: {}
   #wordpress-default:
   #  repo: https://github.com/Varying-Vagrant-Vagrants/vvv-wordpress-default.git
   #  vm_dir: '/srv/www/wordpress-default-provisioner'

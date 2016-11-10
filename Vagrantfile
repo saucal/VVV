@@ -6,10 +6,11 @@ require 'yaml'
 vagrant_dir = File.expand_path(File.dirname(__FILE__))
 www_dir = "www/"
 database_dir = "database/"
+database_backups_dir = "database_backups/"
 
 if Dir.exists?(File.join(vagrant_dir,'sync')) then
 	www_dir = "sync/www/"
-	database_dir = "sync/database/"
+	database_backups_dir = "sync/database_backups/"
 end
 
 vvv_config_file = File.join(vagrant_dir, 'vvv-config.yml')
@@ -201,6 +202,7 @@ Vagrant.configure("2") do |config|
   # This directory is used to maintain default database scripts as well as backed
   # up mysql dumps (SQL files) that are to be imported automatically on vagrant up
   config.vm.synced_folder database_dir, "/srv/database"
+  config.vm.synced_folder database_backups_dir, "/srv/database/backups"
 
   # If the mysql_upgrade_info file from a previous persistent database mapping is detected,
   # we'll continue to map that directory as /var/lib/mysql inside the virtual machine. Once

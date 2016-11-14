@@ -80,6 +80,11 @@ __vv__main() {
 
 	cd $path
 
+	if [ -f "wp-config.php" ]; then
+		echo -e "\e[36mWon't install WP because wp-config already exist\e[39m"
+		exit 0
+	fi
+
 	echo -e "\e[36mDownloading WP\e[39m"
 	wp core download --locale="$wp_db_lang" --allow-root
 

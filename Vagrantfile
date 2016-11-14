@@ -396,6 +396,69 @@ Vagrant.configure("2") do |config|
     config.vm.provision "pre", type: "shell", path: File.join( "provision", "provision-pre.sh" )
   end
 
+  $provision_files = Hash.new
+
+  $vvv_vagrant_conf = config
+
+  def process_paths(paths)
+    return paths.map do |path|
+      site = File.basename(File.dirname(path))
+
+      args = YAML.load_file(path)
+
+      if ! args.kind_of? Hash then
+        args = Hash.new
+      end
+
+      defaults = Hash.new
+      defaults['domain']   = "#{site}.dev"
+      defaults['vm_dir'] = "/srv/www/#{site}"
+      defaults['multisite'] = false
+      defaults['add_content'] = false
+      defaults['locale'] = "en_US"
+      defaults['db_name'] = "#{site}"
+      defaults['admin_user'] = "admin"
+      defaults['admin_pass'] = "test1234"
+      defaults['admin_mail'] = "test@saucal.com"
+
+      this_site = defaults.merge(args)
+
+      $provision_files[site] = this_site
+
+      if defined?(VagrantPlugins::HostsUpdater)
+        $vvv_vagrant_conf.hostsupdater.aliases += [this_site['domain']]
+      end
+    end # Remove duplicate entries
+  end
+  
+  # Recursively fetch the paths to all vvv-hosts files under the www/ directory.
+  paths = Dir[File.join(vagrant_dir, www_dir, '**', 'vvv-provision.yml')]
+
+  # Parse the found vvv-hosts files for host names.
+  process_paths(paths);
+
+  if merge_www_dir != www_dir
+    paths = Dir[File.join(vagrant_dir, merge_www_dir, '**', 'vvv-provision.yml')]
+    process_paths(paths);
+  end
+
+  $provision_files.each do |site, args|
+    config.vm.provision "site-custom-#{site}",
+      type: "shell",
+      path: File.join( "provision", "provision-site-custom.sh" ),
+      args: [
+        "--path "+args["vm_dir"],
+        "--domain "+args["domain"],
+        "--locale "+args["locale"],
+        "--db_name "+args["db_name"],
+        (args["multisite"] ? "--multisite "+args["multisite"] : ""),
+        "--admin_user "+args["admin_user"],
+        "--admin_pass "+args["admin_pass"],
+        "--admin_mail "+args["admin_mail"],
+        "--test_content "+(args["add_content"] ? "y" : "n"),
+      ].join(" ")
+  end
+
   # provision.sh or provision-custom.sh
   #
   # By default, Vagrantfile is set to use the provision.sh bash script located in the

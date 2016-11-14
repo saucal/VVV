@@ -134,8 +134,6 @@ Vagrant.configure("2") do |config|
   # Other domains can be automatically added by including a vvv-hosts file containing
   # individual domains separated by whitespace in subdirectories of www/.
   if defined?(VagrantPlugins::HostsUpdater)
-    # Recursively fetch the paths to all vvv-hosts files under the www/ directory.
-    paths = Dir[File.join(vagrant_dir, www_dir, '**', 'vvv-hosts')]
 
     def process_paths(paths)
       return paths.map do |path|
@@ -147,6 +145,9 @@ Vagrant.configure("2") do |config|
     end
 
     hosts = []
+
+    # Recursively fetch the paths to all vvv-hosts files under the www/ directory.
+    paths = Dir[File.join(vagrant_dir, www_dir, '**', 'vvv-hosts')]
 
     # Parse the found vvv-hosts files for host names.
     hosts += process_paths(paths);

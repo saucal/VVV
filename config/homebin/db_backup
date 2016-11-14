@@ -7,6 +7,6 @@ mysql -e 'show databases' | \
 grep -v -F "information_schema" | \
 grep -v -F "performance_schema" | \
 grep -v -F "mysql" | \
-grep -v -F "test" | \
+grep -v -F "wordpress_unit_tests" | \
 grep -v -F "Database" | \
 while read dbname; do mysqldump -uroot "$dbname" > /srv/database/backups/"$dbname".sql && echo "Database $dbname backed up..."; done

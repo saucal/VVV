@@ -59,6 +59,7 @@ Entirely different server configurations can be created by modifying the files i
 
 1. Start with any local operating system such as Mac OS X, Linux, or Windows.
     * For Windows 8 or higher it is recommended that you run the cmd window as Administrator
+    * In Windows, better results have been achieved by using Git Bash instead of cmd, so this is what we recommend.
 1. Install [VirtualBox 5.1.x](https://www.virtualbox.org/wiki/Downloads)
 1. Install [Vagrant 1.8.x](https://www.vagrantup.com/downloads.html)
     * `vagrant` will now be available as a command in your terminal, try it out.
@@ -80,6 +81,8 @@ Entirely different server configurations can be created by modifying the files i
 1. Start the Vagrant environment with `vagrant up`
     * Be patient as the magic happens. This could take a while on the first run as your local machine downloads the required files.
     * Watch as the script ends, as an administrator or `su` ***password may be required*** to properly modify the hosts file on your local machine.
+    * If you're getting errors on OSX at the beginning of the process that says something that the box cannot be found, try the following:
+        * `sudo rm -rf /opt/vagrant/embedded/bin/curl`
 1. Visit any of the following default sites in your browser:
     * [http://local.wordpress.dev/](http://local.wordpress.dev/) for WordPress stable
     * [http://src.wordpress-develop.dev/](http://src.wordpress-develop.dev/) for trunk WordPress development files

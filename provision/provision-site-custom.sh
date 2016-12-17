@@ -80,55 +80,64 @@ __vv__main() {
 
 	cd $path
 
-	if [ -f "wp-config.php" ]; then
-		echo -e "\e[36mWon't install WP because wp-config already exist\e[39m"
+	if ! hash wp 2>/dev/null || ! hash mysql 2>/dev/null; then
+		echo -e "\e[36mSystem tools required to install WP are not installed. Did you provision VVV?\e[39m"
 		exit 0
 	fi
 
-	echo -e "\e[36mDownloading WP\e[39m"
-	wp core download --locale="$wp_db_lang" --allow-root
+	echo -e "\e[36mProvisioning site $site\e[39m"
 
-	echo -e "\e[36mCreating DB\e[39m"
-	mysql -u root -proot --skip-column-names -e "CREATE DATABASE IF NOT EXISTS \`$db_name\`;\n GRANT ALL PRIVILEGES ON \`$db_name\`.* TO 'wp'@'localhost' IDENTIFIED BY 'wp';" 
+	if [ ! -f "wp-config.php" ]; then
+		echo -e "\e[36mDownloading WP\e[39m"
+		wp core download --locale="$wp_db_lang" --allow-root
 
-	echo -e "\e[36mCreating wp-config\e[39m"
-	wp core config --dbname="$db_name" --dbuser=wp --dbpass=wp --dbhost="localhost" --dbprefix="$wp_db_prefix" --locale="$wp_db_lang" --allow-root
+		echo -e "\e[36mCreating DB\e[39m"
+		mysql -u root -proot --skip-column-names -e "CREATE DATABASE IF NOT EXISTS \`$db_name\`;\n GRANT ALL PRIVILEGES ON \`$db_name\`.* TO 'wp'@'localhost' IDENTIFIED BY 'wp';" 
 
-	install_text='install'
-	if [[ "$multisite" = "n" ]]; then
-		echo -e "\e[36mInstalling WP\e[39m"
-	else
-		echo -e "\e[36mInstalling WP as multisite\e[39m"
-		install_text='multisite-install'
-	fi
-	wp core $install_text --url="$domain" --title="$wp_title" --admin_user="$admin_user" --admin_password="$admin_password" --admin_email="$admin_email" --allow-root
+		echo -e "\e[36mCreating wp-config\e[39m"
+		wp core config --dbname="$db_name" --dbuser=wp --dbpass=wp --dbhost="localhost" --dbprefix="$wp_db_prefix" --locale="$wp_db_lang" --allow-root
 
-	if [[ "$test_content" = "y" ]]; then
-		echo -e "\e[36mInstalling Test Content\e[39m"
-		#curl -s https://raw.githubusercontent.com/manovotny/wptest/master/wptest.xml > import.xml 
-		curl -s https://raw.githubusercontent.com/jasondewitt/wptest/fiximages/wptest.xml > import.xml 
-		wp plugin install wordpress-importer --allow-root 
-		wp plugin activate wordpress-importer --allow-root 
-		wp import import.xml --authors=skip --allow-root 
-		rm import.xml
+		install_text='install'
+		if [[ "$multisite" = "n" ]]; then
+			echo -e "\e[36mInstalling WP\e[39m"
+		else
+			echo -e "\e[36mInstalling WP as multisite\e[39m"
+			install_text='multisite-install'
+		fi
+		wp core $install_text --url="$domain" --title="$wp_title" --admin_user="$admin_user" --admin_password="$admin_password" --admin_email="$admin_email" --allow-root
+
+		if [[ "$test_content" = "y" ]]; then
+			echo -e "\e[36mInstalling Test Content\e[39m"
+			#curl -s https://raw.githubusercontent.com/manovotny/wptest/master/wptest.xml > import.xml 
+			curl -s https://raw.githubusercontent.com/jasondewitt/wptest/fiximages/wptest.xml > import.xml 
+			wp plugin install wordpress-importer --allow-root 
+			wp plugin activate wordpress-importer --allow-root 
+			wp import import.xml --authors=skip --allow-root 
+			rm import.xml
+		fi
 	fi
 	
-	echo -e "\e[36mCreating vvv-hosts file\e[39m"
-	echo "$domain" > "$path/vvv-hosts"
-
-	echo -e "\e[36mCreating nginx config file\e[39m"
-	nginx_domain_text="$domain"
-	if [[ $multisite = 'y' ]] && [[ $ms_type = 'subdomain' ]]; then
-		nginx_domain_text="$domain *.$domain"
+	if [ ! -f "vvv-hosts" ]; then
+		echo -e "\e[36mCreating vvv-hosts file\e[39m"
+		echo "$domain" > "$path/vvv-hosts"
 	fi
-	xip_domain=" ~^${site// /-}\\\.\\\d+\\\.\\\d+\\\.\\\d+\\\.\\\d+\\\.xip\\\.io$"
-	nginx_domain_text="$nginx_domain_text""$xip_domain"
 
-	sed -e "s/testserver\.com/$nginx_domain_text/" \
-		-e "s|/srv/www/wordpress-local|$path|" /srv/config/nginx-config/sites/local-nginx-example.conf-sample > /srv/config/nginx-config/sites/"$site".conf
+	if [ ! -f "vvv-nginx.conf" ]; then
+		echo -e "\e[36mCreating nginx config file\e[39m"
+		nginx_domain_text="$domain"
+		if [[ $multisite = 'y' ]] && [[ $ms_type = 'subdomain' ]]; then
+			nginx_domain_text="$domain *.$domain"
+		fi
+		xip_domain=" ~^${site// /-}\\\.\\\d+\\\.\\\d+\\\.\\\d+\\\.\\\d+\\\.xip\\\.io$"
+		nginx_domain_text="$nginx_domain_text""$xip_domain"
 
-	echo -e "\e[36mDisabling provisioner\e[39m"
-	mv vvv-provision.yml vvv-provision.yml.old
+		sed -e "s/testserver\.com/$nginx_domain_text/" \
+			-e "s|/srv/www/wordpress-local|$path|" /srv/config/nginx-config/sites/local-nginx-example.conf-sample > vvv-nginx.conf
+	fi
+
+	echo -e "\e[36mLinking nginx conf file\e[39m"
+	rm -f /srv/config/nginx-config/sites/"$site".conf
+	ln -s vvv-nginx.conf /srv/config/nginx-config/sites/"$site".conf
 }
 
 __vv__main "$@"

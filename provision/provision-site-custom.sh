@@ -136,8 +136,8 @@ __vv__main() {
 	fi
 
 	echo -e "\e[36mLinking nginx conf file\e[39m"
-	rm -f /srv/config/nginx-config/sites/"$site".conf
-	ln -s vvv-nginx.conf /srv/config/nginx-config/sites/"$site".conf
+	rm -f /etc/nginx/custom-sites/"$site".conf
+	ln -s "$path"/vvv-nginx.conf /etc/nginx/custom-sites/"$site".conf
 }
 
 __vv__main "$@"

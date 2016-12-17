@@ -503,6 +503,7 @@ Vagrant.configure("2") do |config|
 
       if defined?(VagrantPlugins::HostsUpdater)
         $vvv_vagrant_conf.hostsupdater.aliases += [this_site['domain']]
+        $vvv_vagrant_conf.hostsupdater.aliases = $vvv_vagrant_conf.hostsupdater.aliases.uniq;
       end
     end # Remove duplicate entries
   end

@@ -492,6 +492,7 @@ Vagrant.configure("2") do |config|
       defaults['multisite'] = false
       defaults['add_content'] = false
       defaults['locale'] = "en_US"
+      defaults['version'] = "latest"
       defaults['db_name'] = "#{site}"
       defaults['admin_user'] = "admin"
       defaults['admin_pass'] = "test1234"
@@ -528,6 +529,7 @@ Vagrant.configure("2") do |config|
         "--path "+args["vm_dir"],
         "--domain "+args["domain"],
         "--locale "+args["locale"],
+        "--version "+args["version"],
         "--db_name "+args["db_name"],
         (args["multisite"] ? "--multisite "+args["multisite"] : ""),
         "--admin_user "+args["admin_user"],

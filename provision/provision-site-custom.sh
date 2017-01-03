@@ -19,6 +19,10 @@ __vv__check_args() {
 				wp_db_lang=$2
 				shift 2
 				;;
+			-v|--version)
+				wp_version=$2
+				shift 2
+				;;
 			-db|--db_name)
 				db_name=$2
 				shift 2
@@ -49,6 +53,9 @@ __vv__check_args() {
 	site="${path##*/}"
 	if [ -z "$wp_db_lang" ]; then
 		wp_db_lang="en_US"
+	fi
+	if [ -z "$wp_version" ]; then
+		wp_version="latest"
 	fi
 	if [ -z "$db_name" ]; then
 		db_name="$site"
@@ -89,7 +96,7 @@ __vv__main() {
 
 	if [ ! -f "wp-config.php" ]; then
 		echo -e "\e[36mDownloading WP\e[39m"
-		wp core download --locale="$wp_db_lang" --allow-root
+		wp core download --locale="$wp_db_lang" --version="$wp_version" --allow-root
 
 		echo -e "\e[36mCreating DB\e[39m"
 		mysql -u root -proot --skip-column-names -e "CREATE DATABASE IF NOT EXISTS \`$db_name\`;\n GRANT ALL PRIVILEGES ON \`$db_name\`.* TO 'wp'@'localhost' IDENTIFIED BY 'wp';" 

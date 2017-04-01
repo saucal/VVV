@@ -3,6 +3,24 @@
 
 require 'yaml'
 
+if ! ENV['VVV_SKIP_LOGO'] then
+  puts ""
+  puts ""
+  puts "  \033[38;5;196m__     _\033[38;5;118m__     _\033[38;5;33m__     __ \033[38;5;220m ____    "
+  puts "  \033[38;5;196m\\ \\   / \033[38;5;118m\\ \\   / \033[38;5;33m\\ \\   / / \033[38;5;220m|___ \\   "
+  puts "  \033[38;5;196m \\ \\ / /\033[38;5;118m \\ \\ / /\033[38;5;33m \\ \\ / /  \033[38;5;220m  __) |  "
+  puts "  \033[38;5;196m  \\ V / \033[38;5;118m  \\ V / \033[38;5;33m  \\ V /   \033[38;5;220m / __/   "
+  puts "  \033[38;5;196m   \\_/  \033[38;5;118m   \\_/  \033[38;5;33m   \\_/    \033[38;5;220m|_____|  "
+  puts ""
+  puts "  \033[38;5;206mVarying Vagrant Vagrants \033[38;5;118m2.0.0"
+  puts ""
+  puts "  \033[38;5;220mDocs:       https://varyingvagrantvagrants.org/"
+  puts "  \033[38;5;220mContribute: https://github.com/varying-vagrant-vagrants/vvv"
+  puts ""
+  puts ""
+  puts "\033[0m"
+end
+
 vagrant_dir = File.expand_path(File.dirname(__FILE__))
 www_dir = "www/"
 merge_www_dir = www_dir
@@ -88,6 +106,16 @@ if ! vvv_config['utilities'].kind_of? Hash then
   vvv_config['utilities'] = Hash.new
 end
 
+if ! vvv_config['vm_config'].kind_of? Hash then
+  vvv_config['vm_config'] = Hash.new
+end
+
+defaults = Hash.new
+defaults['memory'] = 1024
+defaults['cores'] = 1
+
+vvv_config['vm_config'] = defaults.merge(vvv_config['vm_config'])
+
 vvv_config['hosts'] = vvv_config['hosts'].uniq
 
 Vagrant.configure("2") do |config|
@@ -98,8 +126,8 @@ Vagrant.configure("2") do |config|
 
   # Configurations from 1.0.x can be placed in Vagrant 1.1.x specs like the following.
   config.vm.provider :virtualbox do |v|
-    v.customize ["modifyvm", :id, "--memory", 1024]
-    v.customize ["modifyvm", :id, "--cpus", 1]
+    v.customize ["modifyvm", :id, "--memory", vvv_config['vm_config']['memory']]
+    v.customize ["modifyvm", :id, "--cpus", vvv_config['vm_config']['cores']]
     v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
     v.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
 
@@ -112,20 +140,20 @@ Vagrant.configure("2") do |config|
   config.vm.provider :parallels do |v|
     v.update_guest_tools = true
     v.customize ["set", :id, "--longer-battery-life", "off"]
-    v.memory = 1024
-    v.cpus = 1
+    v.memory = vvv_config['vm_config']['memory']
+    v.cpus = vvv_config['vm_config']['cores']
   end
 
   # Configuration options for the VMware Fusion provider.
   config.vm.provider :vmware_fusion do |v|
-    v.vmx["memsize"] = "1024"
-    v.vmx["numvcpus"] = "1"
+    v.vmx["memsize"] = vvv_config['vm_config']['memory']
+    v.vmx["numvcpus"] = vvv_config['vm_config']['cores']
   end
 
   # Configuration options for Hyper-V provider.
   config.vm.provider :hyperv do |v, override|
-    v.memory = 1024
-    v.cpus = 1
+    v.memory = vvv_config['vm_config']['memory']
+    v.cpus = vvv_config['vm_config']['cores']
   end
 
   # SSH Agent Forwarding
@@ -557,22 +585,22 @@ Vagrant.configure("2") do |config|
   # scripting. See the individual files in config/homebin/ for details.
   if defined? VagrantPlugins::Triggers
     config.trigger.after :up, :stdout => true do
-      run "vagrant ssh -c 'vagrant_up'"
+      system({'VVV_SKIP_LOGO'=> 'true'}, "vagrant ssh -c 'vagrant_up'")
     end
     config.trigger.before :reload, :stdout => true do
-      run "vagrant ssh -c 'vagrant_halt'"
+      system({'VVV_SKIP_LOGO'=> 'true'}, "vagrant ssh -c 'vagrant_halt'")
     end
     config.trigger.after :reload, :stdout => true do
-      run "vagrant ssh -c 'vagrant_up'"
+      system({'VVV_SKIP_LOGO'=> 'true'}, "vagrant ssh -c 'vagrant_up'")
     end
     config.trigger.before :halt, :stdout => true do
-      run "vagrant ssh -c 'vagrant_halt'"
+      system({'VVV_SKIP_LOGO'=> 'true'}, "vagrant ssh -c 'vagrant_halt'")
     end
     config.trigger.before :suspend, :stdout => true do
-      run "vagrant ssh -c 'vagrant_suspend'"
+      system({'VVV_SKIP_LOGO'=> 'true'}, "vagrant ssh -c 'vagrant_suspend'")
     end
     config.trigger.before :destroy, :stdout => true do
-      run "vagrant ssh -c 'vagrant_destroy'"
+      system({'VVV_SKIP_LOGO'=> 'true'}, "vagrant ssh -c 'vagrant_destroy'")
     end
   end
 end

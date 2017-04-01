@@ -39,9 +39,11 @@ apt_package_check_list=(
 
   # Extra PHP modules that we find useful
   php-pear
-  php7.0-imagick
-  php7.0-memcache
-  php7.0-memcached
+  php-imagick
+  php-memcache
+  php-memcached
+  php-ssh2
+  php-xdebug
   php7.0-bcmath
   php7.0-curl
   php7.0-gd
@@ -51,8 +53,6 @@ apt_package_check_list=(
   php7.0-imap
   php7.0-json
   php7.0-soap
-  php7.0-ssh2
-  php7.0-xdebug
   php7.0-xml
   php7.0-zip
 
@@ -227,8 +227,8 @@ package_install() {
   # Use debconf-set-selections to specify the default password for the root MariaDB
   # account. This runs on every provision, even if MariaDB has been installed. If
   # MariaDB is already installed, it will not affect anything.
-  echo mariadb-server-5.5 mysql-server/root_password password "root" | debconf-set-selections
-  echo mariadb-server-5.5 mysql-server/root_password_again password "root" | debconf-set-selections
+  echo mariadb-server-10.1 mysql-server/root_password password "root" | debconf-set-selections
+  echo mariadb-server-10.1 mysql-server/root_password_again password "root" | debconf-set-selections
 
   # Postfix
   #
@@ -238,9 +238,6 @@ package_install() {
   # able to send mail, even with postfix installed.
   echo postfix postfix/main_mailer_type select Internet Site | debconf-set-selections
   echo postfix postfix/mailname string vvv | debconf-set-selections
-
-  # Disable ipv6 as some ISPs/mail servers have problems with it
-  echo "inet_protocols = ipv4" >> "/etc/postfix/main.cf"
 
   # Provide our custom apt sources before running `apt-get update`
   ln -sf /srv/config/apt-source-append.list /etc/apt/sources.list.d/vvv-sources.list
@@ -264,8 +261,13 @@ package_install() {
     wget --quiet "http://nginx.org/keys/nginx_signing.key" -O- | apt-key add -
 
     # Apply the PHP signing key
+    echo "Applying the PHP signing key..."
     apt-key adv --quiet --keyserver "hkp://keyserver.ubuntu.com:80" --recv-key E5267A6C 2>&1 | grep "gpg:"
     apt-key export E5267A6C | apt-key add -
+
+    # Apply the MariaDB signing key
+    echo "Applying the MariaDB signing key..."
+    apt-key adv --quiet --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xcbcb082a1bb943db
 
     # Update all of the package references before installing anything
     echo "Running apt-get update..."
@@ -317,7 +319,7 @@ tools_install() {
     echo "ack-grep already installed"
   else
     echo "Installing ack-grep as ack"
-    curl -s http://beyondgrep.com/ack-2.14-single-file > "/usr/bin/ack" && chmod +x "/usr/bin/ack"
+    curl -s https://beyondgrep.com/ack-2.16-single-file > "/usr/bin/ack" && chmod +x "/usr/bin/ack"
   fi
 
   # COMPOSER

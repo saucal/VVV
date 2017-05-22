@@ -4,7 +4,14 @@ title: Adding a New Site
 permalink: /docs/en-US/adding-a-new-site/
 ---
 
-Adding a new site is as simple as adding it under the sites section of `vvv-custom.yml`.
+* [Add New Sites](adding-a-new-site/index.md)
+   * [Changing a sites PHP Version](adding-a-new-site/changing-php-version.md)
+   * [Custom Domains and Hosts](adding-a-new-site/custom-domains-host.md)
+   * [Custom Paths and Folders](adding-a-new-site/custom-paths-and-folders.md)
+   * [Nginx Configs](adding-a-new-site/nginx-configs.md)
+   * [Setup Scripts](adding-a-new-site/setup-script.md)
+
+Adding a new site is as simple as adding it under the sites section of `vvv-custom.yml`. If `vvv-custom.yml` does not exist, you can create it by copying `vvv-config.yml` to `vvv-custom.yml`.
 
 To do this there are 3 steps:
 
@@ -16,7 +23,7 @@ To do this there are 3 steps:
 
 I'm going to walk through setting up a blog named vvvtest.com locally using VVV, but this could be a site currently hosted in MAMP.
 
-If you're migrating a site from VVV 1, read this page, then visit the [migration page](migrating-vvv1.md) for further details.
+If you're migrating a site from VVV 1, read this page, then visit the [migration page](../migrating-vvv1.md) for further details.
 
 ## `vvv-custom.yml` and The Main Folder
 
@@ -91,7 +98,7 @@ server {
 }
 ```
 
-For more information about Nginx and VVV, read the [Nginx Configs page](adding-a-new-site/nginx-configs.md) of adding a new site.
+For more information about Nginx and VVV, read the [Nginx Configs page](nginx-configs.md) of adding a new site.
 
 ## Reprovision
 

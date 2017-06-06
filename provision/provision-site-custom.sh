@@ -109,7 +109,11 @@ __vv__main() {
 			echo -e "\e[36mInstalling WP\e[39m"
 		else
 			echo -e "\e[36mInstalling WP as multisite\e[39m"
-			install_text='multisite-install'
+			if [[ $ms_type = 'subdomain' ]]; then
+				install_text='multisite-install --subdomains'
+			else
+				install_text='multisite-install'
+			fi
 		fi
 		wp core $install_text --url="$domain" --title="$wp_title" --admin_user="$admin_user" --admin_password="$admin_password" --admin_email="$admin_email" --allow-root
 

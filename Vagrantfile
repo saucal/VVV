@@ -530,11 +530,24 @@ Vagrant.configure("2") do |config|
       defaults['admin_mail'] = "test@saucal.com"
 
       this_site = defaults.merge(args)
+      this_site['hosts'] = [this_site['domain']]  
+
+      site_host_paths = Dir[File.join(File.dirname(path), '**', 'vvv-hosts')]
+
+      this_site['hosts'] += site_host_paths.map do |path|
+        lines = File.readlines(path).map(&:chomp)
+        lines.grep(/\A[^#]/)
+      end.flatten
+
+      this_site['hosts'] = this_site['hosts'].uniq
 
       $provision_files[site] = this_site
 
       if defined?(VagrantPlugins::HostsUpdater)
-        $vvv_vagrant_conf.hostsupdater.aliases += [this_site['domain']]
+        this_site['hosts'].map do |domain|
+          $vvv_vagrant_conf.hostsupdater.aliases += [domain]
+        end
+
         $vvv_vagrant_conf.hostsupdater.aliases = $vvv_vagrant_conf.hostsupdater.aliases.uniq;
       end
     end # Remove duplicate entries

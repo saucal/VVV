@@ -518,7 +518,7 @@ Vagrant.configure("2") do |config|
       end
 
       defaults = Hash.new
-      defaults['domain']   = "#{site}.dev"
+      defaults['domain'] = "#{site}.dev"
       defaults['vm_dir'] = "/srv/www/#{site}"
       defaults['multisite'] = false
       defaults['add_content'] = false

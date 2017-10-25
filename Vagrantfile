@@ -4,20 +4,17 @@
 require 'yaml'
 
 if ! ENV['VVV_SKIP_LOGO'] then
+  puts "  \033[38;5;196m__     _\033[38;5;118m__     _\033[38;5;33m__     __ \033[38;5;129m ____    "
+  puts "  \033[38;5;196m\\ \\   / \033[38;5;118m\\ \\   / \033[38;5;33m\\ \\   / / \033[38;5;129m|___ \\   "
+  puts "  \033[38;5;196m \\ \\ / /\033[38;5;118m \\ \\ / /\033[38;5;33m \\ \\ / /  \033[38;5;129m  __) |  "
+  puts "  \033[38;5;196m  \\ V / \033[38;5;118m  \\ V / \033[38;5;33m  \\ V /   \033[38;5;129m / __/   "
+  puts "  \033[38;5;196m   \\_/  \033[38;5;118m   \\_/  \033[38;5;33m   \\_/    \033[38;5;129m|_____|  "
   puts ""
-  puts ""
-  puts "  \033[38;5;196m__     _\033[38;5;118m__     _\033[38;5;33m__     __ \033[38;5;220m ____    "
-  puts "  \033[38;5;196m\\ \\   / \033[38;5;118m\\ \\   / \033[38;5;33m\\ \\   / / \033[38;5;220m|___ \\   "
-  puts "  \033[38;5;196m \\ \\ / /\033[38;5;118m \\ \\ / /\033[38;5;33m \\ \\ / /  \033[38;5;220m  __) |  "
-  puts "  \033[38;5;196m  \\ V / \033[38;5;118m  \\ V / \033[38;5;33m  \\ V /   \033[38;5;220m / __/   "
-  puts "  \033[38;5;196m   \\_/  \033[38;5;118m   \\_/  \033[38;5;33m   \\_/    \033[38;5;220m|_____|  "
-  puts ""
-  puts "  \033[38;5;206mVarying Vagrant Vagrants \033[38;5;118m2.0.0"
-  puts ""
-  puts "  \033[38;5;220mDocs:       https://varyingvagrantvagrants.org/"
-  puts "  \033[38;5;220mContribute: https://github.com/varying-vagrant-vagrants/vvv"
-  puts ""
-  puts ""
+  puts "  \033[38;5;196mVarying \033[38;5;118mVagrant \033[38;5;33mVagrants \033[38;5;129m2.0.0"
+  #puts ""
+  puts "  \033[0mDocs:       https://varyingvagrantvagrants.org/"
+  puts "  \033[0mContribute: https://github.com/varying-vagrant-vagrants/vvv"
+  puts "  \033[0mDashboard:  http://vvv.test"
   puts "\033[0m"
 end
 
@@ -58,6 +55,9 @@ if ! vvv_config['hosts'].kind_of? Hash then
 end
 
 vvv_config['hosts'] += ['vvv.dev']
+vvv_config['hosts'] += ['vvv.test']
+vvv_config['hosts'] += ['vvv.local']
+vvv_config['hosts'] += ['vvv.localhost']
 
 host_paths = Dir[File.join(vagrant_dir, www_dir, '**', 'vvv-hosts')]
 
@@ -133,10 +133,11 @@ Vagrant.configure("2") do |config|
     v.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
     v.customize ["modifyvm", :id, "--rtcuseutc", "on"]
     v.customize ["modifyvm", :id, "--audio", "none"]
+    v.customize ["modifyvm", :id, "--paravirtprovider", "kvm"]
 
     # Set the box name in VirtualBox to match the working directory.
     vvv_pwd = Dir.pwd
-    v.name = File.basename(vvv_pwd)
+    v.name = File.basename(vagrant_dir) + "_" + (Digest::SHA256.hexdigest vagrant_dir)[0..10]
   end
 
   # Configuration options for the Parallels provider.

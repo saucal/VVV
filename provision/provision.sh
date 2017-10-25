@@ -24,6 +24,8 @@ apt_package_install_list=()
 # virtual machine. We'll then loop through each of these and check individual
 # status before adding them to the apt_package_install_list array.
 apt_package_check_list=(
+  # Please avoid apostrophes in these comments - they break vim syntax
+  # highlighting.
 
   # PHP7
   #
@@ -82,22 +84,22 @@ apt_package_check_list=(
   # ntp service to keep clock current
   ntp
 
-  # Req'd for i18n tools
+  # Required for i18n tools
   gettext
 
-  # Req'd for Webgrind
+  # Required for Webgrind
   graphviz
 
   # dos2unix
-  # Allows conversion of DOS style line endings to something we'll have less
-  # trouble with in Linux.
+  # Allows conversion of DOS style line endings to something less troublesome
+  # in Linux.
   dos2unix
 
   # nodejs for use by grunt
   g++
   nodejs
 
-  #Mailcatcher requirement
+  # Mailcatcher requirement
   libsqlite3-dev
 
 )
@@ -308,7 +310,9 @@ tools_install() {
   # npm
   #
   # Make sure we have the latest npm version and the update checker module
+  echo "Installing/updating npm..."
   npm install -g npm
+  echo "Installing/updating npm-check-updates..."
   npm install -g npm-check-updates
 
   # ack-grep
@@ -342,32 +346,50 @@ tools_install() {
   # the master branch on its GitHub repository.
   if [[ -n "$(composer --version --no-ansi | grep 'Composer version')" ]]; then
     echo "Updating Composer..."
-    COMPOSER_HOME=/usr/local/src/composer composer self-update
-    COMPOSER_HOME=/usr/local/src/composer composer -q global require --no-update phpunit/phpunit:5.*
-    COMPOSER_HOME=/usr/local/src/composer composer -q global require --no-update phpunit/php-invoker:1.1.*
-    COMPOSER_HOME=/usr/local/src/composer composer -q global require --no-update mockery/mockery:0.9.*
-    COMPOSER_HOME=/usr/local/src/composer composer -q global require --no-update d11wtq/boris:v1.0.8
-    COMPOSER_HOME=/usr/local/src/composer composer -q global config bin-dir /usr/local/bin
-    COMPOSER_HOME=/usr/local/src/composer composer global update
+    COMPOSER_HOME=/usr/local/src/composer composer --no-ansi self-update
+    COMPOSER_HOME=/usr/local/src/composer composer --no-ansi global require --no-update phpunit/phpunit:5.*
+    COMPOSER_HOME=/usr/local/src/composer composer --no-ansi global require --no-update phpunit/php-invoker:1.1.*
+    COMPOSER_HOME=/usr/local/src/composer composer --no-ansi global require --no-update mockery/mockery:0.9.*
+    COMPOSER_HOME=/usr/local/src/composer composer --no-ansi global require --no-update d11wtq/boris:v1.0.8
+    COMPOSER_HOME=/usr/local/src/composer composer --no-ansi global config bin-dir /usr/local/bin
+    COMPOSER_HOME=/usr/local/src/composer composer --no-ansi global update
   fi
 
   # Grunt
   #
   # Install or Update Grunt based on current state.  Updates are direct
   # from NPM
+  function hack_avoid_gyp_errors() {
+    # Without this, we get a bunch of errors when installing `grunt-sass`:
+    # > node scripts/install.js
+    # Unable to save binary /usr/lib/node_modules/.../node-sass/.../linux-x64-48 :
+    # { Error: EACCES: permission denied, mkdir '/usr/lib/node_modules/... }
+    # Then, node-gyp generates tons of errors like:
+    # WARN EACCES user "root" does not have permission to access the dev dir
+    # "/usr/lib/node_modules/grunt-sass/node_modules/node-sass/.node-gyp/6.11.2"
+    # TODO: Why do child processes of `npm` run as `nobody`?
+    while [ ! -f /tmp/stop_gyp_hack ]; do
+      if [ -d /usr/lib/node_modules/grunt-sass/ ]; then
+        chown -R nobody:vagrant /usr/lib/node_modules/grunt-sass/
+      fi
+      sleep .2
+    done
+    rm /tmp/stop_gyp_hack
+  }
   if [[ "$(grunt --version)" ]]; then
     echo "Updating Grunt CLI"
-    npm update -g grunt-cli &>/dev/null
-    npm update -g grunt-sass &>/dev/null
-    npm update -g grunt-cssjanus &>/dev/null
-    npm update -g grunt-rtlcss &>/dev/null
+    npm update -g grunt-cli
+    hack_avoid_gyp_errors & npm update -g grunt-sass; touch /tmp/stop_gyp_hack
+    npm update -g grunt-cssjanus
+    npm update -g grunt-rtlcss
   else
     echo "Installing Grunt CLI"
-    npm install -g grunt-cli &>/dev/null
-    npm install -g grunt-sass &>/dev/null
-    npm install -g grunt-cssjanus &>/dev/null
-    npm install -g grunt-rtlcss &>/dev/null
+    npm install -g grunt-cli
+    hack_avoid_gyp_errors & npm install -g grunt-sass; touch /tmp/stop_gyp_hack
+    npm install -g grunt-cssjanus
+    npm install -g grunt-rtlcss
   fi
+  chown -R vagrant:vagrant /usr/lib/node_modules/
 
   # Graphviz
   #
@@ -396,7 +418,7 @@ nginx_setup() {
             -key /etc/nginx/server.key \
             -out /etc/nginx/server.crt \
             -days 3650 \
-            -subj /CN=*.wordpress-develop.dev/CN=*.wordpress.dev/CN=*.vvv.dev 2>&1)"
+            -subj /CN=*.wordpress-develop.dev/CN=*.wordpress.dev/CN=*.vvv.dev/CN=*.vvv.local/CN=*.vvv.localhost/CN=*.vvv.test 2>&1)"
 	  echo "$vvvsigncert"
   fi
 
@@ -515,7 +537,7 @@ mailcatcher_setup() {
     gpg -q --no-tty --batch --keyserver "hkp://keyserver.ubuntu.com:80" --recv-keys BF04FF17
 
     printf " * RVM [not installed]\n Installing from source"
-    curl --silent -L "https://raw.githubusercontent.com/rvm/rvm/stable/binscripts/rvm-installer" | sudo bash -s stable --ruby
+    curl --silent -L "https://raw.githubusercontent.com/rvm/rvm/stable/binscripts/rvm-installer" | sudo bash -s stable --ruby --quiet-curl
     source "/usr/local/rvm/scripts/rvm"
   fi
 
@@ -600,14 +622,14 @@ php_codesniff() {
   echo -e "\nInstall/Update PHP_CodeSniffer (phpcs), see https://github.com/squizlabs/PHP_CodeSniffer"
   echo -e "\nInstall/Update WordPress-Coding-Standards, sniffs for PHP_CodeSniffer, see https://github.com/WordPress-Coding-Standards/WordPress-Coding-Standards"
   cd /vagrant/provision/phpcs
-  composer update --no-autoloader
+  composer update --no-ansi --no-autoloader
 
   # Link `phpcbf` and `phpcs` to the `/usr/local/bin` directory
-  ln -sf "/srv/www/phpcs/scripts/phpcbf" "/usr/local/bin/phpcbf"
-  ln -sf "/srv/www/phpcs/scripts/phpcs" "/usr/local/bin/phpcs"
+  ln -sf "/srv/www/phpcs/bin/phpcbf" "/usr/local/bin/phpcbf"
+  ln -sf "/srv/www/phpcs/bin/phpcs" "/usr/local/bin/phpcs"
 
   # Install the standards in PHPCS
-  phpcs --config-set installed_paths ./CodeSniffer/Standards/WordPress/
+  phpcs --config-set installed_paths ./CodeSniffer/Standards/WordPress/,./CodeSniffer/Standards/VIP-Coding-Standards/
   phpcs --config-set default_standard WordPress-Core
   phpcs -i
 }
@@ -638,6 +660,9 @@ cleanup_vvv(){
   echo "Cleaning the virtual machine's /etc/hosts file..."
   sed -n '/# vvv-auto$/!p' /etc/hosts > /tmp/hosts
   echo "127.0.0.1 vvv.dev # vvv-auto" >> "/etc/hosts"
+  echo "127.0.0.1 vvv.local # vvv-auto" >> "/etc/hosts"
+  echo "127.0.0.1 vvv.localhost # vvv-auto" >> "/etc/hosts"
+  echo "127.0.0.1 vvv.test # vvv-auto" >> "/etc/hosts"
   mv /tmp/hosts /etc/hosts
 }
 
@@ -685,4 +710,4 @@ cleanup_vvv
 end_seconds="$(date +%s)"
 echo "-----------------------------"
 echo "Provisioning complete in "$(( end_seconds - start_seconds ))" seconds"
-echo "For further setup instructions, visit http://vvv.dev"
+echo "For further setup instructions, visit http://vvv.test"

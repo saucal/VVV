@@ -126,6 +126,17 @@ __vv__main() {
 			wp import import.xml --authors=skip --allow-root 
 			rm import.xml
 		fi
+	else
+		if [ -f "wp-content/database.sql" ]; then
+			echo -e "\e[36mFound database backup. Installing site from there.\e[39m"
+			wp config set DB_USER "wp" --allow-root 
+			wp config set DB_PASSWORD "wp" --allow-root 
+			wp config set DB_HOST "localhost" --allow-root 
+			wp config set DB_NAME "$db_name" --allow-root 
+			mysql -u root -proot --skip-column-names -e "CREATE DATABASE IF NOT EXISTS \`$db_name\`;\n GRANT ALL PRIVILEGES ON \`$db_name\`.* TO 'wp'@'localhost' IDENTIFIED BY 'wp';" 
+			wp db import ./wp-content/database.sql --allow-root
+			rm ./wp-content/database.sql
+		fi
 	fi
 	
 	if [ ! -f "vvv-hosts" ]; then
@@ -142,8 +153,16 @@ __vv__main() {
 		xip_domain=" ~^${site// /-}\\\.\\\d+\\\.\\\d+\\\.\\\d+\\\.\\\d+\\\.xip\\\.io$"
 		nginx_domain_text="$nginx_domain_text""$xip_domain"
 
-		sed -e "s/testserver\.com/$nginx_domain_text/" \
+		old_home="$(wp config get WPLM_OLD_HOME --allow-root)"
+
+		if [ ! -z "$old_home" ]; then
+			sed -e "s/testserver\.com/$nginx_domain_text/" \
+			-e "s|/srv/www/wordpress-local|$path|" \
+			-e "s|\(.*\)\# Includes a basic|\1if (!-e \$request_filename) {\n\1    rewrite ^/[_0-9a-zA-Z-]+(/wp-content/uploads/.*) \$1;\n\1}\n\1if (!-e \$request_filename) {\n\1    rewrite ^/wp-content/uploads/(.*)$ \$scheme://$old_home/wp-content/uploads/\$1 redirect;\n\1}\n\n\0|" /srv/config/nginx-config/sites/local-nginx-example.conf-sample > vvv-nginx.conf
+		else
+			sed -e "s/testserver\.com/$nginx_domain_text/" \
 			-e "s|/srv/www/wordpress-local|$path|" /srv/config/nginx-config/sites/local-nginx-example.conf-sample > vvv-nginx.conf
+		fi
 	fi
 
 	echo -e "\e[36mLinking nginx conf file\e[39m"

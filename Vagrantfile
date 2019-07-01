@@ -151,6 +151,12 @@ end
 
 vvv_config['hosts'] += ['vvv.test']
 
+if File.exists?(File.join(vagrant_dir,'Saucalfile-early')) then
+  puts "Running Custom SAU/CAL file with additional vagrant configs at #{File.join(vagrant_dir,'Saucalfile-early')}\n\n"
+  eval(IO.read(File.join(vagrant_dir,'Saucalfile-early')), binding)
+  puts "Finished running Custom SAU/CAL file with additional vagrant configs, resuming normal vagrantfile execution\n\n"
+end
+
 vvv_config['sites'].each do |site, args|
   if args.kind_of? String then
       repo = args
@@ -630,6 +636,12 @@ SCRIPT
         override.vm.synced_folder args['local_dir'], args['vm_dir'], :owner => "www-data", :mount_options => []
       end
     end
+  end
+
+  if File.exists?(File.join(vagrant_dir,'Saucalfile-late')) then
+    puts "Running Custom SAU/CAL file with additional vagrant configs at #{File.join(vagrant_dir,'Saucalfile-late')}\n\n"
+    eval(IO.read(File.join(vagrant_dir,'Saucalfile-late')), binding)
+    puts "Finished running Custom SAU/CAL file with additional vagrant configs, resuming normal vagrantfile execution\n\n"
   end
 
   # Customfile - POSSIBLY UNSTABLE

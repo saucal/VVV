@@ -1,0 +1,116 @@
+$new_sites = Hash.new;
+$vagrant_dir_global = vagrant_dir
+
+vvv_config['sites'].each do |name, args|
+  if args['is_saucal_auto'] == 'yes' then
+    vvv_config['sites'].delete(name)
+  end
+end
+
+def process_paths(www_dir)
+  paths = Dir[File.join($vagrant_dir_global, www_dir, '**', 'vvv-provision.yml')]
+  return paths.map do |path|
+    site = File.basename(File.dirname(path))
+
+    args = YAML.load_file(path)
+
+    if ! args.kind_of? Hash then
+      args = Hash.new
+    end
+
+    defaults = Hash.new
+    defaults['domain'] = "#{site}.test"
+
+    this_site = defaults.merge(args)
+    this_site['hosts'] = [this_site['domain']]  
+
+    site_host_paths = Dir[File.join(File.dirname(path), '**', 'vvv-hosts')]
+
+    this_site['hosts'] += site_host_paths.map do |path|
+      lines = File.readlines(path).map(&:chomp)
+      lines.grep(/\A[^#]/)
+    end.flatten
+
+    this_site['hosts'] = this_site['hosts'].uniq # Remove duplicate entries
+
+    ## Adapt to new structrue
+
+    new_defaults = Hash.new
+    new_defaults['repo']   = 'https://github.com/saucal/custom-site-template.git'
+    new_defaults['branch'] = 'feature/saucal'
+    new_defaults['local_dir'] = File.join($vagrant_dir_global, www_dir, site)
+    new_defaults['hosts'] = this_site['hosts']
+    new_defaults['custom'] = Hash.new
+    new_defaults['is_saucal_auto'] = 'yes'
+
+    this_site = new_defaults.merge(this_site)
+    this_site.delete('domain')
+
+    this_site.each do |name, val|
+      case name
+      when "repo", "branch", "vm_dir", "local_dir", "skip_provisioning", "allow_customfile", "nginx_upstream", "hosts", "custom"
+      
+      when "is_saucal_auto"
+
+      when "add_content"
+        if val then
+          this_site['custom']['test_content'] = 'y'
+        else
+          this_site['custom']['test_content'] = 'n'
+        end
+        this_site.delete(name)
+      when "multisite"
+        if ! val then
+          this_site['custom']['wp_type'] = 'single'
+        else
+          if val == !!val || val == 'yes'  then 
+            this_site['custom']['wp_type'] = 'subdirectory'
+          else
+            this_site['custom']['wp_type'] = 'subdomain'
+          end
+        end
+        this_site.delete(name)
+      when "version", "locale"
+        this_site['custom'][ 'wp_' + name ] = val
+        this_site.delete(name)
+      when "title"
+        this_site['custom'][ 'site_title' ] = val
+        this_site.delete(name)
+      else
+        this_site['custom'][name] = val
+        this_site.delete(name)
+      end
+    end
+    if this_site['custom'].length == 0 then
+      this_site.delete('custom')
+    end
+    $new_sites[site] = this_site
+  end
+end
+
+www_dir = "www/"
+merge_www_dir = www_dir
+
+if Dir.exists?(File.join(vagrant_dir,'sync')) then
+  if Dir.exists?(File.join(vagrant_dir,'sync', 'www'))
+    merge_www_dir = "sync/www/"
+  end
+end
+
+# Recursively fetch the paths to all vvv-hosts files under the www/ directory.
+
+# Parse the found vvv-hosts files for host names.
+process_paths(www_dir);
+
+if merge_www_dir != www_dir
+  process_paths(merge_www_dir);
+end
+
+vvv_config['sites'] = vvv_config['sites'].merge($new_sites);
+
+vvv_custom = YAML.load_file( File.join(vagrant_dir, 'vvv-custom.yml') );
+vvv_custom['sites'] = vvv_custom['sites'].merge($new_sites);
+
+File.open( File.join(vagrant_dir, 'vvv-custom.yml'), 'w' ) do |out|
+  YAML.dump( vvv_custom, out )
+end

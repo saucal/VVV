@@ -1,0 +1,5 @@
+if Dir.exists?(File.join(vagrant_dir,'sync')) then
+  if Dir.exists?(File.join(vagrant_dir,'sync/database_backups'))
+	config.vm.synced_folder "sync/database_backups/", "/srv/database/backups"
+  end
+end

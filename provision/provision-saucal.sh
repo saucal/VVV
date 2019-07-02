@@ -24,4 +24,4 @@ else
 	fi
 fi
 
-cp -Rf ${SAUCAL_REPO}/provision ${VM_DIR}/provision
+cp -Rf "${SAUCAL_REPO}/provision" "${VM_DIR}/provision"

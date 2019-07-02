@@ -69,3 +69,5 @@
 # But not the custom phpMyAdmin config in the database-admin directory.
 /www/default/database-admin/config.inc.custom.php
 /certificates
+
+/sync

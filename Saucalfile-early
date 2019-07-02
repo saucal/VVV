@@ -36,8 +36,6 @@ def process_paths(www_dir)
     ## Adapt to new structrue
 
     new_defaults = Hash.new
-    new_defaults['repo']   = 'https://github.com/saucal/custom-site-template.git'
-    new_defaults['branch'] = 'feature/saucal'
     new_defaults['local_dir'] = File.join($vagrant_dir_global, www_dir, site)
     new_defaults['hosts'] = this_site['hosts']
     new_defaults['custom'] = Hash.new
@@ -85,6 +83,16 @@ def process_paths(www_dir)
       this_site.delete('custom')
     end
     $new_sites[site] = this_site
+
+    Vagrant.configure("2") do |config|
+      config.vm.provision "saucal-provisioner-#{site}",
+        type: "shell",
+        keep_color: true, 
+        path: File.join( "provision", "provision-saucal.sh" ),
+        args: [
+          "/srv/www/#{site}"
+        ]
+    end
   end
 end
 

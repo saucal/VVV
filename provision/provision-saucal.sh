@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-VM_DIR=$1
 SAUCAL_REPO="/var/provisioners/saucal-custom-site-template/"
 REPO="https://github.com/saucal/custom-site-template.git"
 BRANCH="saucal_version"
@@ -24,4 +23,7 @@ else
 	fi
 fi
 
-cp -Rf "${SAUCAL_REPO}/provision" "${VM_DIR}/provision"
+for VM_DIR in "$@"
+do
+    cp -Rf "${SAUCAL_REPO}/provision" "${VM_DIR}"
+done

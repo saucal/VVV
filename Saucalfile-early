@@ -83,16 +83,6 @@ def process_paths(www_dir)
       this_site.delete('custom')
     end
     $new_sites[site] = this_site
-
-    Vagrant.configure("2") do |config|
-      config.vm.provision "saucal-provisioner-#{site}",
-        type: "shell",
-        keep_color: true, 
-        path: File.join( "provision", "provision-saucal.sh" ),
-        args: [
-          "/srv/www/#{site}"
-        ]
-    end
   end
 end
 
@@ -121,4 +111,13 @@ vvv_custom['sites'] = vvv_custom['sites'].merge($new_sites);
 
 File.open( File.join(vagrant_dir, 'vvv-custom.yml'), 'w' ) do |out|
   YAML.dump( vvv_custom, out )
+end
+
+Vagrant.configure("2") do |config|
+  list = $new_sites.collect { |site,args| "/srv/www/" + site }
+  config.vm.provision "saucal-provisioner",
+    type: "shell",
+    keep_color: true, 
+    path: File.join( "provision", "provision-saucal.sh" ),
+    args: list
 end

@@ -16,12 +16,16 @@ This is primarily a reliability update. Note that updating to v3.1 requires a `v
  - Allow `db_backup` script to be run manually regardless if automatic DB backups are disabled
  - `vvv`, `vvv.dev`, and `vvv.local` now redirect to `vvv.test`
  - Added a premade Sequel Pro config file under the `database` folder
+ - Set GitHub token from `vvv-custom.yml` for Composer
 
 ### Bug Fixes
 
  - Changed to the `ubuntu/bionic64` box to avoid issues with kernel page cache corruption until they can be identified, these were causing issues when updating a WP installation
  - Fixes to mysql user and group creation to improve shared folder reliability
  - Fixed an issue with permissions in files copied to the home folder
+ - Fixed shared folder and permissions for Microsoft Hyper-V
+ - Fixed all mount_options to the correct permissions for Microsoft Hyper-V
+ - Set VM Name to exactly the same as VirtualBox, using v.vmname for Hyper-V
  - Fixes to log file paths for XDebug and PHP
  - Fixes files and folders in the home folder being owned by root instead of vagrant
  - Fixes support for database names containing hyphens in the import/restore scripts

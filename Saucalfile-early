@@ -68,7 +68,7 @@ def process_paths(www_dir)
           end
         end
         this_site.delete(name)
-      when "version", "locale"
+      when "version", "locale", "type"
         this_site['custom'][ 'wp_' + name ] = val
         this_site.delete(name)
       when "title"

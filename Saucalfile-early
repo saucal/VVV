@@ -41,6 +41,14 @@ def process_paths(www_dir)
     new_defaults['custom'] = Hash.new
     new_defaults['is_saucal_auto'] = 'yes'
 
+    # WPLM support
+    if File.exists?(File.join(File.dirname(path),'wplm-old-domain')) then
+      lines = File.readlines(File.join(File.dirname(path),'wplm-old-domain')).map(&:chomp)
+      if lines.length > 0 && lines[0].length > 0 then
+        new_defaults['custom']['live_url] = lines[0]
+      end
+    end
+
     this_site = new_defaults.merge(this_site)
     this_site.delete('domain')
 

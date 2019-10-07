@@ -45,7 +45,7 @@ def process_paths(www_dir)
     if File.exists?(File.join(File.dirname(path),'wplm-old-domain')) then
       lines = File.readlines(File.join(File.dirname(path),'wplm-old-domain')).map(&:chomp)
       if lines.length > 0 && lines[0].length > 0 then
-        new_defaults['custom']['live_url] = lines[0]
+        new_defaults['custom']['live_url'] = lines[0]
       end
     end
 

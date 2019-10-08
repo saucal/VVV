@@ -763,8 +763,8 @@ services_restart() {
   # Disable PHP Xdebug module by default
   phpdismod xdebug
 
-  # Enable PHP mailcatcher sendmail settings by default
-  phpenmod mailhog
+  # Enable PHP MailHog sendmail settings by default
+  phpenmod -s fpm mailhog
 
   # Restart all php-fpm versions
   find /etc/init.d/ -name "php*-fpm" -exec bash -c 'sudo service "$(basename "$0")" restart' {} \;

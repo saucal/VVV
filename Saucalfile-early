@@ -114,10 +114,10 @@ end
 
 vvv_config['sites'] = vvv_config['sites'].merge($new_sites);
 
-vvv_custom = YAML.load_file( File.join(vagrant_dir, 'vvv-custom.yml') );
+vvv_custom = YAML.load_file( vvv_config_file );
 vvv_custom['sites'] = vvv_custom['sites'].merge($new_sites);
 
-File.open( File.join(vagrant_dir, 'vvv-custom.yml'), 'w' ) do |out|
+File.open( vvv_config_file, 'w' ) do |out|
   YAML.dump( vvv_custom, out )
 end
 

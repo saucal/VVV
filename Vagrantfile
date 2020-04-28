@@ -270,12 +270,9 @@ if show_logo
     platform << 'systemd ' if Vagrant::Util::Platform.systemd?
   end
 
-  if Vagrant.has_plugin?('vagrant-hostsupdater')
-    platform << 'vagrant-hostsupdater '
-  end
-
+  platform << 'vagrant-hostmanager' if Vagrant.has_plugin?('vagrant-hostmanager')
+  platform << 'vagrant-hostsupdater' if Vagrant.has_plugin?('vagrant-hostsupdater')
   platform << 'vagrant-vbguest' if Vagrant.has_plugin?('vagrant-vbguest')
-
   platform << 'vagrant-disksize' if Vagrant.has_plugin?('vagrant-disksize')
 
   platform << 'CaseSensitiveFS' if Vagrant::Util::Platform.fs_case_sensitive?
@@ -386,7 +383,7 @@ Vagrant.configure('2') do |config|
     if File.file?(File.join(vagrant_dir, 'vagrant-hostsupdater.gem'))
       system('vagrant plugin install ' + File.join(vagrant_dir, 'vagrant-hostsupdater.gem'))
       File.delete(File.join(vagrant_dir, 'vagrant-hostsupdater.gem'))
-      puts "#{yellow}VVV has completed installing local plugins. Please run the requested command again.#{creset}"
+      puts "#{yellow}VVV has completed installing the vagrant-hostsupdater plugins. Please run the requested command again.#{creset}"
       exit
     else
       config.vagrant.plugins = ['vagrant-hostsupdater']
@@ -790,11 +787,22 @@ Vagrant.configure('2') do |config|
   #
   # By default, we'll include the domains set up by VVV through the vvv-hosts file
   # located in the www/ directory and in config/config.yml.
-  if defined?(VagrantPlugins::HostsUpdater)
+  #
 
+  if defined?(VagrantPlugins::HostManager)
+    config.hostmanager.aliases = vvv_config['hosts']
+    config.hostmanager.enabled = true
+    config.hostmanager.manage_host = true
+    config.hostmanager.manage_guest = true
+    config.hostmanager.ignore_private_ip = false
+    config.hostmanager.include_offline = true
+  elsif defined?(VagrantPlugins::HostsUpdater)
     # Pass the found host names to the hostsupdater plugin so it can perform magic.
     config.hostsupdater.aliases = vvv_config['hosts']
     config.hostsupdater.remove_on_suspend = true
+  else
+    puts "! Neither the HostManager or HostsUpdater plugins are installed!!! Domains won't work without one of these plugins!"
+    puts "Run vagrant plugin install vagrant-hostmanager then try again."
   end
 
   # Vagrant Triggers

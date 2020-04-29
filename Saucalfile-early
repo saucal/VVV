@@ -8,7 +8,7 @@ vvv_config['sites'].each do |name, args|
 end
 
 def process_paths(www_dir)
-  paths = Dir[File.join($vagrant_dir_global, www_dir, '**', 'vvv-provision.yml')]
+  paths = Dir[File.join($vagrant_dir_global, www_dir, '*', 'vvv-provision.yml')]
   return paths.map do |path|
     site = File.basename(File.dirname(path))
 
@@ -24,7 +24,7 @@ def process_paths(www_dir)
     this_site = defaults.merge(args)
     this_site['hosts'] = [this_site['domain']]  
 
-    site_host_paths = Dir[File.join(File.dirname(path), '**', 'vvv-hosts')]
+    site_host_paths = Dir[File.join(File.dirname(path), 'vvv-hosts')]
 
     this_site['hosts'] += site_host_paths.map do |path|
       lines = File.readlines(path).map(&:chomp)

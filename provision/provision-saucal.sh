@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+mkdir -p "/vagrant"
+echo "Updating config file early"
+if [[ -f "/srv/config/config.yml" ]]; then
+	cp -f "/srv/config/config.yml" "/vagrant/config.yml"
+fi
+
 SAUCAL_REPO="/var/provisioners/saucal-custom-site-template/"
 REPO="https://github.com/saucal/custom-site-template.git"
 BRANCH="saucal_version"

@@ -129,5 +129,4 @@ Vagrant.configure("2") do |config|
     path: File.join( "provision", "provision-saucal.sh" ),
     args: list
 
-  config.vm.provision 'serve-config', type: 'file', run: "always", source: "#{__dir__}/config/config.yml", destination: '/vagrant/config.yml'
 end

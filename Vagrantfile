@@ -123,6 +123,20 @@ if show_logo
   puts splashfirst
 end
 
+case (Process.uid)
+when 0
+	puts "#{red}     ! DANGER  !"
+	puts "#{red} ! ▄▀▀▀▄▄▄▄▄▄▄▀▀▀▄ !  You should never use sudo or root with vagrant.#{creset}"
+	puts "#{red}  !█▒▒░░░░░░░░░▒▒█    It causes lots of problems :(#{creset}"
+	puts "#{red}!   █░░█░▄▄░░█░░█ !   #{creset}"
+	puts "#{red}     █░░█░░█░▄▄█    ! We're really sorry but you may need to do painful#{creset}"
+	puts "#{red}  !  ▀▄░█░░██░░█      cleanup commands to fix this.#{creset}"
+	puts " "
+	puts "#{red}If vagrant does not work for you without sudo, open a GitHub issue instead#{creset}"
+	puts "#{red}In the future, this warning will halt provisioning to prevent new users making this mistake.#{creset}"
+  # exit
+end
+  
 # Load the config file before the second section of the splash screen
 
 # Perform file migrations from older versions
@@ -272,6 +286,7 @@ if show_logo
 
   platform << 'vagrant-hostmanager' if Vagrant.has_plugin?('vagrant-hostmanager')
   platform << 'vagrant-hostsupdater' if Vagrant.has_plugin?('vagrant-hostsupdater')
+  platform << 'vagrant-goodhosts' if Vagrant.has_plugin?('vagrant-goodhosts')
   platform << 'vagrant-vbguest' if Vagrant.has_plugin?('vagrant-vbguest')
   platform << 'vagrant-disksize' if Vagrant.has_plugin?('vagrant-disksize')
 
@@ -379,14 +394,14 @@ Vagrant.configure('2') do |config|
   end
 
   # Auto Download Vagrant plugins, supported from Vagrant 2.2.0
-  unless Vagrant.has_plugin?('vagrant-hostsupdater')
-    if File.file?(File.join(vagrant_dir, 'vagrant-hostsupdater.gem'))
-      system('vagrant plugin install ' + File.join(vagrant_dir, 'vagrant-hostsupdater.gem'))
-      File.delete(File.join(vagrant_dir, 'vagrant-hostsupdater.gem'))
-      puts "#{yellow}VVV has completed installing the vagrant-hostsupdater plugins. Please run the requested command again.#{creset}"
+  unless Vagrant.has_plugin?('vagrant-hostsupdater') && Vagrant.has_plugin?('vagrant-goodhosts') && Vagrant.has_plugin?('vagrant-hostsmanager')
+    if File.file?(File.join(vagrant_dir, 'vagrant-goodhosts.gem'))
+      system('vagrant plugin install ' + File.join(vagrant_dir, 'vagrant-goodhosts.gem'))
+      File.delete(File.join(vagrant_dir, 'vagrant-goodhosts.gem'))
+      puts "#{yellow}VVV needed to install the vagrant-goodhosts plugin which is now installed. Please run the requested command again.#{creset}"
       exit
     else
-      config.vagrant.plugins = ['vagrant-hostsupdater']
+      config.vagrant.plugins = ['vagrant-goodhosts']
     end
   end
 
@@ -671,9 +686,10 @@ Vagrant.configure('2') do |config|
   # Note that if you find yourself using a Customfile for anything crazy or specifying
   # different provisioning, then you may want to consider a new Vagrantfile entirely.
   if File.exist?(File.join(vagrant_dir, 'Customfile'))
-    puts "Running Custom Vagrant file with additional vagrant configs at #{File.join(vagrant_dir, 'Customfile')}\n\n"
+    puts " ⚠ ! Running additional Vagrant code in Customfile located at #{File.join(vagrant_dir, 'Customfile')}\n"
+    puts " ⚠ ! Official support is not provided for this feature, it is assumed you are proficient with vagrant\n\n"
     eval(IO.read(File.join(vagrant_dir, 'Customfile')), binding)
-    puts "Finished running Custom Vagrant file with additional vagrant configs, resuming normal vagrantfile execution\n\n"
+    puts " ⚠ ! Finished running Customfile, resuming normal vagrantfile execution\n\n"
   end
 
   vvv_config['sites'].each do |site, args|
@@ -681,8 +697,10 @@ Vagrant.configure('2') do |config|
 
     paths = Dir[File.join(args['local_dir'], '**', 'Customfile')]
     paths.each do |file|
-      puts "Running additional site vagrant customfile at #{file}\n\n"
+      puts " ⚠ ! Running additional site customfile at #{file}\n"
+      puts " ⚠ ! Official support is not provided for this feature.\n\n"
       eval(IO.read(file), binding)
+      puts " ⚠ ! Finished running Customfile, resuming normal vagrantfile execution\n\n"
     end
   end
 
@@ -717,7 +735,7 @@ Vagrant.configure('2') do |config|
                       args: [
                         vvv_config['dashboard']['repo'],
                         vvv_config['dashboard']['branch']
-                      ], 
+                      ],
                       env: { "VVV_LOG" => "dashboard" }
 
   vvv_config['utility-sources'].each do |name, args|
@@ -729,7 +747,7 @@ Vagrant.configure('2') do |config|
                           name,
                           args['repo'].to_s,
                           args['branch']
-                        ], 
+                        ],
                         env: { "VVV_LOG" => "utility-source-#{name}" }
   end
 
@@ -780,7 +798,7 @@ Vagrant.configure('2') do |config|
 
   # Local Machine Hosts
   #
-  # If the Vagrant plugin hostsupdater (https://github.com/cogitatio/vagrant-hostsupdater) is
+  # If the Vagrant plugin goodhosts (https://github.com/Mte90/vagrant-goodhosts/) is
   # installed, the following will automatically configure your local machine's hosts file to
   # be aware of the domains specified below. Watch the provisioning script as you may need to
   # enter a password for Vagrant to access your hosts file.
@@ -789,20 +807,23 @@ Vagrant.configure('2') do |config|
   # located in the www/ directory and in config/config.yml.
   #
 
-  if defined?(VagrantPlugins::HostManager)
+  if Vagrant.has_plugin?('vagrant-goodhosts')
+    config.goodhosts.aliases = vvv_config['hosts']
+    config.goodhosts.remove_on_suspend = true
+  elsif Vagrant.has_plugin?('vagrant-hostsmanager')
     config.hostmanager.aliases = vvv_config['hosts']
     config.hostmanager.enabled = true
     config.hostmanager.manage_host = true
     config.hostmanager.manage_guest = true
     config.hostmanager.ignore_private_ip = false
     config.hostmanager.include_offline = true
-  elsif defined?(VagrantPlugins::HostsUpdater)
+  elsif Vagrant.has_plugin?('vagrant-hostsupdater')
     # Pass the found host names to the hostsupdater plugin so it can perform magic.
     config.hostsupdater.aliases = vvv_config['hosts']
     config.hostsupdater.remove_on_suspend = true
   else
-    puts "! Neither the HostManager or HostsUpdater plugins are installed!!! Domains won't work without one of these plugins!"
-    puts "Run vagrant plugin install vagrant-hostmanager then try again."
+    puts "! Neither the HostManager, GoodHosts or HostsUpdater plugins are installed!!! Domains won't work without one of these plugins!"
+    puts "Run 'vagrant plugin install vagrant-goodhosts' then try again."
   end
 
   # Vagrant Triggers

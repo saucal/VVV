@@ -35,6 +35,7 @@ export COMPOSER_NO_INTERACTION=1
 
 # cleanup
 mkdir -p /vagrant
+rm -rf /vagrant/failed_provisioners
 mkdir -p /vagrant/failed_provisioners
 
 rm -f /vagrant/provisioned_at
@@ -168,6 +169,7 @@ apt_package_install_list=(
   php7.2-bcmath
   php7.2-curl
   php7.2-gd
+  php7.2-intl
   php7.2-mbstring
   php7.2-mysql
   php7.2-imap
@@ -239,7 +241,7 @@ git_ppa_check() {
     echo " * Adding ppa:git-core/ppa repository"
     sudo add-apt-repository -y ppa:git-core/ppa &>/dev/null
     # Update apt-get info.
-    sudo apt-get update &>/dev/null
+    sudo apt-get update --fix-missing
     echo " * git-core/ppa added"
   else
     echo " * git-core/ppa already present, skipping"
@@ -295,9 +297,9 @@ profile_setup() {
   rm -f "/home/vagrant/.bash_aliases"
   noroot cp -f "/srv/config/bash_aliases" "/home/vagrant/.bash_aliases"
 
-  echo " * Copying /srv/config/bash_aliases                      to $HOME/.bash_aliases"
-  rm -f "$HOME/.bash_aliases"
-  cp -f "/srv/config/bash_aliases" "$HOME/.bash_aliases"
+  echo " * Copying /srv/config/bash_aliases                      to ${HOME}/.bash_aliases"
+  rm -f "${HOME}/.bash_aliases"
+  cp -f "/srv/config/bash_aliases" "${HOME}/.bash_aliases"
 
   echo " * Copying /srv/config/vimrc                             to /home/vagrant/.vimrc"
   rm -f "/home/vagrant/.vimrc"
@@ -322,9 +324,9 @@ profile_setup() {
     noroot cp "/srv/config/bash_prompt" "/home/vagrant/.bash_prompt"
   fi
 
-  echo " * Copying /srv/config/ssh_known_hosts to /etc/ssh/ssh_known_hosts"
+  echo " * Copying /srv/config/ssh_known_hosts                   to /etc/ssh/ssh_known_hosts"
   cp -f /srv/config/ssh_known_hosts /etc/ssh/ssh_known_hosts
-  echo " * Copying /srv/config/sshd_config to /etc/ssh/sshd_config"
+  echo " * Copying /srv/config/sshd_config                       to /etc/ssh/sshd_config"
   cp -f /srv/config/sshd_config /etc/ssh/sshd_config
   echo " * Reloading SSH Daemon"
   systemctl reload ssh
@@ -355,7 +357,6 @@ package_install() {
     echo " * adding the mysql user"
     useradd -u 9001 -g mysql -G vboxsf -r mysql
   fi
-  id mysql
 
   mkdir -p "/etc/mysql/conf.d"
   echo " * Copying /srv/config/mysql-config/vvv-core.cnf to /etc/mysql/conf.d/vvv-core.cnf"
@@ -419,25 +420,37 @@ package_install() {
     apt-key add /srv/config/apt-keys/mongo-server-4.0.asc
   fi
 
+  # fix https://github.com/Varying-Vagrant-Vagrants/VVV/issues/2150
+  echo " * Cleaning up dpkg lock file"
+  rm /var/lib/dpkg/lock*
+
+  echo " * Updating apt keys"
+  apt-key update -y
+
   # Update all of the package references before installing anything
+  echo " * Copying /srv/config/apt-conf-d/99hashmismatch to /etc/apt/apt.conf.d/99hashmismatch"
+  cp -f "/srv/config/apt-conf-d/99hashmismatch" "/etc/apt/apt.conf.d/99hashmismatch"
   echo " * Running apt-get update..."
-  apt-get -y update
+  rm -rf /var/lib/apt/lists/*
+  apt-get update -y --fix-missing
 
   # Install required packages
   echo " * Installing apt-get packages..."
+  # To avoid issues on provisioning and failed apt installation
+  dpkg --configure -a
   if ! apt-get -y --allow-downgrades --allow-remove-essential --allow-change-held-packages -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confnew install --fix-missing --fix-broken ${apt_package_install_list[@]}; then
     echo " * Installing apt-get packages returned a failure code, cleaning up apt caches then exiting"
-    apt-get clean
+    apt-get clean -y
     return 1
   fi
 
   # Remove unnecessary packages
-  echo " * Removing unnecessary packages..."
+  echo " * Removing unnecessary apt packages..."
   apt-get autoremove -y
 
   # Clean up apt caches
   echo " * Cleaning apt caches..."
-  apt-get clean
+  apt-get clean -y
 
   return 0
 }
@@ -446,14 +459,6 @@ tools_install() {
   echo " * Running tools_install"
   # Disable xdebug before any composer provisioning.
   sh /srv/config/homebin/xdebug_off
-
-  echo " * Checking for NVM"
-  if [[ -f ~/.nvm ]]; then
-    echo " * .nvm folder found, switching to system node, and removing NVM folders"
-    nvm use system
-    rm -rf ~/.nvm ~/.npm ~/.bower /srv/config/nvm
-    echo " * NVM folders removed"
-  fi
 
   if [[ $(nodejs -v | sed -ne 's/[^0-9]*\(\([0-9]\.\)\{0,4\}[0-9][^.]\).*/\1/p') != '10' ]]; then
     echo " * Downgrading to Node v10."
@@ -501,8 +506,9 @@ tools_install() {
   if [[ -n "$(noroot composer --version --no-ansi | grep 'Composer version')" ]]; then
     echo " * Updating Composer..."
     COMPOSER_HOME=/usr/local/src/composer noroot composer --no-ansi global config bin-dir /usr/local/bin
-    COMPOSER_HOME=/usr/local/src/composer noroot composer --no-ansi self-update --no-progress --no-interaction
-    COMPOSER_HOME=/usr/local/src/composer noroot composer --no-ansi global require --no-update --no-progress --no-interaction phpunit/phpunit:6.* phpunit/php-invoker:1.1.* mockery/mockery:0.9.* d11wtq/boris:v1.0.8
+    COMPOSER_HOME=/usr/local/src/composer noroot composer --no-ansi self-update --stable --no-progress --no-interaction
+    COMPOSER_HOME=/usr/local/src/composer noroot composer --no-ansi global require --prefer-dist --no-update --no-progress --no-interaction phpunit/phpunit:^7.5
+    COMPOSER_HOME=/usr/local/src/composer noroot composer --no-ansi global require --prefer-dist --no-update --no-progress --no-interaction phpunit/phpunit:^7.5
     COMPOSER_HOME=/usr/local/src/composer noroot composer --no-ansi global update --no-progress --no-interaction
   fi
 
@@ -698,32 +704,33 @@ EOL
 
 check_mysql_root_password() {
   echo " * Checking the root user password is root"
-  mysql -u root --password=root -e "SHOW DATABASES" &> /dev/null
-  if [ $? -eq 0 ]; then
+  # Get if root has correct password and mysql_native_password as plugin
+  sql=$( cat <<-SQL
+      SELECT count(*) from mysql.user WHERE
+      User='root' AND
+      authentication_string=PASSWORD('root') AND
+      plugin='mysql_native_password';
+SQL
+)
+  root_matches=$(mysql -u root --password=root -s -N -e "${sql}")
+  if [[ $? -eq 0 && $root_matches == "1" ]]; then
+    # mysql connected and the SQL above matched
     echo " * The root password is the expected value"
     return 0
   fi
+  # Do reset password in safemode
   echo " * The root password is not root, fixing"
-  echo "   - stopping database"
-  service mysql stop
-  echo "   - checking /var/run/mysqld"
-  mkdir -p /var/run/mysqld && chown mysql:mysql /var/run/mysqld
-  echo "   - starting the database in safe mode and updating the root user"
-  mysqld_safe --skip-grant-tables &
-  echo "   - waiting 2 seconds for database to finish starting"
-  sleep 2
-  echo "   - updating the root user"
   sql=$( cat <<-SQL
-      use mysql;
-      update user set authentication_string=PASSWORD('root') where User='root';
-      update user set plugin='mysql_native_password' where User='root';
-      flush privileges;
+      ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password USING PASSWORD('root');
+      FLUSH PRIVILEGES;
 SQL
-  )
-  mysql -uroot -e "${sql}"
-  echo "   - stopping database in safemode"
-  mysqladmin -u root --password="root" shutdown
-  echo "   - root user password should now be root"
+)
+  mysql -u root -proot -e "${sql}"
+  if [[ $? -eq 0 ]]; then
+    echo "   - root user password should now be root"
+  else
+    vvv_warn "   - could not reset root password"
+  fi
 }
 
 mysql_setup() {

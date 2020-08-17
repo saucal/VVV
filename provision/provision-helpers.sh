@@ -61,11 +61,11 @@ function network_check() {
   # outside access is available to us. Also check the mariadb
   declare -a hosts_to_test=(
     "https://ppa.launchpad.net"
-    "https://mirror.herrbischoff.com"
     "https://wordpress.org"
     "https://github.com"
     "https://raw.githubusercontent.com"
     "https://getcomposer.org"
+    "http://ams2.mirrors.digitalocean.com"
   )
   declare -a failed_hosts=()
   for url in "${hosts_to_test[@]}"; do
@@ -84,7 +84,7 @@ function network_check() {
     echo " "
     for i in "${hosts_to_test[@]}"; do
       local url="${i}"
-      if containsElement "${i}" failed_hosts[@]; then
+      if containsElement "${i}" "${failed_hosts}"; then
         echo -e "${CRESET} [${RED}x${CRESET}] ${url}${RED}"
       else
         echo -e "${CRESET} [${GREEN}✓${CRESET}] ${url}${RED}"
@@ -133,12 +133,16 @@ function log_to_file() {
 	local logfile="${logfolder}/${1}.log"
 	mkdir -p "${logfolder}"
 	touch "${logfile}"
-	# reset output otherwise it will log to previous files
+	# reset output otherwise it will log to previous files. from backup made in provisioners.sh
 	exec 1>&6
 	exec 2>&7
 	# pipe to file
-	exec > >(tee -a "${logfile}" )
-	exec 2> >(tee -a "${logfile}" >&2 )
+	if [[ "${1}" == "provisioner-main" ]]; then
+		exec > >( tee -a "${logfile}" ) # main provisioner outputs everything
+	else
+		exec > >( tee -a "${logfile}" >/dev/null ) # others, only stderr
+	fi
+	exec 2> >( tee -a "${logfile}" >&2 )
 	VVV_CURRENT_LOG_FILE="${logfile}"
 }
 export -f log_to_file
@@ -148,6 +152,14 @@ function noroot() {
 }
 export -f noroot
 
+function vvv_info() {
+  echo -e "${CRESET}${1}${CRESET}"
+  if [ "${VVV_LOG}" != "main" ]; then
+    >&6 echo -e "${CRESET}${1}${CRESET}"
+  fi
+}
+export -f vvv_info
+
 function vvv_error() {
 	echo -e "${RED}${1}${CRESET}"
 }
@@ -155,11 +167,17 @@ export -f vvv_error
 
 function vvv_warn() {
 	echo -e "${YELLOW}${1}${CRESET}"
+  if [ "${VVV_LOG}" != "main" ]; then
+  	>&6 echo -e "${YELLOW}${1}${CRESET}"
+  fi
 }
 export -f vvv_warn
 
 function vvv_success() {
 	echo -e "${GREEN}${1}${CRESET}"
+  if [ "${VVV_LOG}" != "main" ]; then
+  	>&6 echo -e "${GREEN}${1}${CRESET}"
+  fi
 }
 export -f vvv_success
 

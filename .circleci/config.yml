@@ -27,3 +27,16 @@ jobs:
           name: Check VBox Version
           command: |
             VBoxManage --version
+
+      # Install Vagrant
+      - run:
+          name: Install Vagrant
+          command: |
+            curl -O https://releases.hashicorp.com/vagrant/2.2.10/vagrant_2.2.10_x86_64.deb
+            sudo apt install -y ./vagrant_2.2.10_x86_64.deb
+
+      # Check Vagrant Version
+      - run:
+          name: Check Vagrant Version
+          command: |
+            vagrant --version

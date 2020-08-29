@@ -40,3 +40,10 @@ jobs:
           name: Check Vagrant Version
           command: |
             vagrant --version
+
+      # Make Vagrant
+      - run:
+          name: vagrant up
+          command: |
+            vagrant plugin install vagrant-goodhosts
+            vagrant up

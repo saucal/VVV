@@ -12,3 +12,18 @@ jobs:
           command: |
             id
             pwd
+      - run:
+          name: APT Update
+          command: sudo apt update
+
+      # VBox
+      - run:
+          name: Install VirtualBox
+          command: |
+            sudo apt install -y virtualbox virtualbox-dkms linux-headers-aws
+
+      # Check VBox Version
+      - run:
+          name: Check VBox Version
+          command: |
+            VBoxManage --version

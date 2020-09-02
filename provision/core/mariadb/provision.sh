@@ -81,6 +81,10 @@ function mysql_setup() {
   # If MariaDB/MySQL is installed, go through the various imports and service tasks.
   local exists_mysql
 
+  # manage server using init.d
+  wget --quiet -O /etc/init.d/mysql-server https://raw.githubusercontent.com/MariaDB/server/10.5/support-files/mysql.server.sh
+  chmod a+x /etc/init.d/mysql-server
+
   exists_mysql="$(service mysql status)"
   if [[ "mysql: unrecognized service" == "${exists_mysql}" ]]; then
     echo -e "\n ! MySQL is not installed. No databases imported."
@@ -103,10 +107,10 @@ function mysql_setup() {
   # deciding whether to start or restart.
   if [[ "mysql stop/waiting" == "${exists_mysql}" ]]; then
     echo " * Starting the mysql service"
-    service mysql start
+    /etc/init.d/mysql-server start
   else
     echo " * Restarting mysql service"
-    service mysql restart
+    /etc/init.d/mysql-server restart
   fi
 
   # IMPORT SQL
@@ -133,3 +137,5 @@ function mysql_setup() {
 export -f mysql_setup
 
 vvv_add_hook after_packages mysql_setup 30
+
+vvv_add_hook services_restart "/etc/init.d/mysql-server restart"

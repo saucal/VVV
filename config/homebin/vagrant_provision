@@ -21,7 +21,7 @@ fi
 
 echo "Restarting Nginx and MySQL"
 /etc/init.d/nginx restart
-sudo service mysql restart
+/etc/init.d/mysql-server restart
 
 green="\033[01;32m"
 echo ""

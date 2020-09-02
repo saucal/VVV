@@ -50,7 +50,7 @@ export -f shyaml_setup
 
 vvv_add_hook after_packages shyaml_setup 0
 
-vvv_add_hook services_restart "service ntp restart"
+vvv_add_hook services_restart "/etc/init.d/ntp restart"
 
 function cleanup_vvv(){
   echo " "

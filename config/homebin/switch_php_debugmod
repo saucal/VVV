@@ -44,7 +44,7 @@ enable_phpmod() {
 
 restart_phpfpm() {
 	echo " * Restarting PHP FPM's so the change takes effect"
-	find /etc/init.d/ -name "php*-fpm" -exec bash -c 'sudo service "$(basename "$0")" restart' {} \;
+	find /etc/init.d/ -name "php*-fpm" -exec bash -c '$0 restart' {} \;
 }
 
 echo " * Disabling active debug PHP mods"

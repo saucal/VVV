@@ -116,7 +116,7 @@ vvv_add_hook finalize phpfpm_finalize
 
 function phpfpm_services_restart() {
   # Restart all php-fpm versions
-  find /etc/init.d/ -name "php*-fpm" -exec bash -c 'sudo service "$(basename "$0")" restart' {} \;
+  find /etc/init.d/ -name "php*-fpm" -exec bash -c '$0 restart' {} \;
 }
 export -f phpfpm_services_restart
 

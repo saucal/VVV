@@ -79,7 +79,7 @@ export -f nginx_setup
 
 vvv_add_hook after_packages nginx_setup 40
 
-vvv_add_hook services_restart "service nginx restart"
+vvv_add_hook services_restart "/etc/init.d/nginx restart"
 
 function nginx_cleanup() {
   echo " "

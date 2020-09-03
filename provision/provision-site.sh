@@ -237,7 +237,7 @@ vvv_provision_site_script
 vvv_provision_site_nginx
 
 echo " * Reloading Nginx"
-service nginx reload
+/etc/init.d/nginx reload
 
 if [ "${SUCCESS}" -ne "0" ]; then
   vvv_error " ! ${SITE} provisioning had some issues, check the log as the site may not function correctly."

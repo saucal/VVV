@@ -20,7 +20,7 @@ if [[ -f /srv/config/homebin/vagrant_provision_custom ]]; then
 fi
 
 echo "Restarting Nginx and MySQL"
-sudo service nginx restart
+/etc/init.d/nginx restart
 sudo service mysql restart
 
 green="\033[01;32m"

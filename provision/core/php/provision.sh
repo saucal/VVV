@@ -146,4 +146,4 @@ function memcached_setup() {
   cp -f "/srv/config/memcached-config/memcached.conf" "/etc/memcached_default.conf"
 }
 vvv_add_hook after_packages memcached_setup 60
-vvv_add_hook services_restart "service memcached restart"
+vvv_add_hook services_restart "/etc/init.d/memcached restart"

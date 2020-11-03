@@ -27,8 +27,9 @@ function php_register_packages() {
 
     # Extra PHP modules that we find useful
     php-pear
-    php-ssh2
-    php-yaml
+    php-pcov
+    "php${VVV_BASE_PHPVERSION}-ssh2"
+    "php${VVV_BASE_PHPVERSION}-yaml"
     "php${VVV_BASE_PHPVERSION}-bcmath"
     "php${VVV_BASE_PHPVERSION}-curl"
     "php${VVV_BASE_PHPVERSION}-gd"
@@ -44,31 +45,16 @@ function php_register_packages() {
 
   # ImageMagick
   VVV_PACKAGE_LIST+=(
-    php-imagick
+    php${VVV_BASE_PHPVERSION}-imagick
     imagemagick
   )
 
   # XDebug
   VVV_PACKAGE_LIST+=(
-    php-xdebug
-
-    # Required for Webgrind
-    graphviz
+    php${VVV_BASE_PHPVERSION}-xdebug
   )
 }
 vvv_add_hook before_packages php_register_packages
-
-function graphviz_setup() {
-  # Graphviz
-  #
-  # Set up a symlink between the Graphviz path defined in the default Webgrind
-  # config and actual path.
-  echo " * Adding graphviz symlink for Webgrind..."
-  ln -sf "/usr/bin/dot" "/usr/local/bin/dot"
-}
-export -f graphviz_setup
-
-vvv_add_hook after_packages graphviz_setup 20
 
 function phpfpm_setup() {
   # Copy php-fpm configuration from local
@@ -90,9 +76,9 @@ function phpfpm_setup() {
   echo " * Copying /srv/config/php-config/mailhog.ini       to /etc/php/${VVV_BASE_PHPVERSION}/mods-available/mailhog.ini"
   cp -f "/srv/config/php-config/mailhog.ini" "/etc/php/${VVV_BASE_PHPVERSION}/mods-available/mailhog.ini"
 
-  if [[ -f "/etc/php/7.2/mods-available/mailcatcher.ini" ]]; then
+  if [[ -f "/etc/php/${VVV_BASE_PHPVERSION}/mods-available/mailcatcher.ini" ]]; then
     echo " * Cleaning up mailcatcher.ini from a previous install"
-    rm -f /etc/php/7.2/mods-available/mailcatcher.ini
+    rm -f "/etc/php/${VVV_BASE_PHPVERSION}/mods-available/mailcatcher.ini"
   fi
 }
 export -f phpfpm_setup
@@ -103,6 +89,7 @@ function phpfpm_finalize() {
   # Disable PHP Xdebug module by default
   echo " * Disabling XDebug PHP extension"
   phpdismod xdebug
+  phpdismod pcov
 
   # Add the vagrant user to the www-data group so that it has better access
   # to PHP and Nginx related files.
@@ -131,8 +118,8 @@ vvv_add_hook nginx_upstreams php_nginx_upstream
 function memcached_register_packages() {
   # MemCached
   VVV_PACKAGE_LIST+=(
-    php-memcache
-    php-memcached
+    php${VVV_BASE_PHPVERSION}-memcache
+    php${VVV_BASE_PHPVERSION}-memcached
 
     # memcached is made available for object caching
     memcached

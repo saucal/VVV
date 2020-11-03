@@ -24,10 +24,11 @@ dpkg --list \
     | xargs apt-get -y purge;
 
 # Delete development packages
-dpkg --list \
-    | awk '{ print $2 }' \
-    | grep -- '-dev$' \
-    | xargs apt-get -y purge;
+#dpkg --list \
+#    | awk '{ print $2 }' \
+#    | grep -- '-dev$' \
+#    | xargs apt-get -y purge;
+#apt-get -y purge autotools-dev
 
 # delete docs packages
 dpkg --list \
@@ -67,7 +68,7 @@ rm -rf /usr/share/doc/*
 find /var/cache -type f -exec rm -rf {} \;
 
 # delete any logs that have built up during the install
-find /var/log/ -name *.log -exec rm -f {} \;
+find /var/log/ -name "*.log" -exec rm -f {} \;
 
 # Blank netplan machine-id (DUID) so machines get unique ID generated on boot.
 truncate -s 0 /etc/machine-id

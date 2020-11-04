@@ -49,7 +49,10 @@ async function getCurrentInfo() {
   return {
     url: currentUrl,
     host: currentHost,
-    port: currentUrl.indexOf('https') >= 0 ? 443 : 80
+    port: currentUrl.indexOf('https') >= 0 ? 443 : 80,
+    ngrok: {
+      subdomain: ( argv.subdomain ) ? argv.subdomain : false
+    }
   }
 }
 
@@ -114,13 +117,27 @@ async function execCommand( command ) {
 }
 
 async function ngrokConnect() {
-
-	const url = await ngrok.connect( {
-		proto: 'http',
-		addr: siteData.port,
-		// host_header: siteData.host,
-    bind_tls: siteData.port === 80 ? false : true,
-  } );
+  var url;
+  try {
+    url = await ngrok.connect( {
+      proto: 'http',
+      addr: siteData.port,
+      // host_header: siteData.host,
+      bind_tls: siteData.port === 80 ? false : true,
+      subdomain: siteData.ngrok.subdomain ? siteData.ngrok.subdomain : undefined,
+    } );
+  } catch( e ) {
+    if( e.msg ) {
+      console.error('ERROR: ' + e.msg);
+    } else {
+      console.error('Unknown error');
+      console.error(e);
+    }
+    if( e.details && e.details.err ) {
+      console.error(e.details.err);
+    }
+    process.exit();
+  }
 
   const monitor = await ngrok.connect( {
 		proto: 'http',
@@ -130,10 +147,9 @@ async function ngrokConnect() {
   } );
   
   
-  siteData.ngrok = {
-    url: url,
-    monitor: monitor,
-  }
+  siteData.ngrok.url = url;
+  siteData.ngrok.monitor = monitor;
+  siteData.ngrok.subdomain = url.split('//')[1].split('.')[0];
 
 	return siteData;
 }

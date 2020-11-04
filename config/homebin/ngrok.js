@@ -156,7 +156,7 @@ async function ngrokConnect() {
 
 async function ngrokKill() {
 	console.log( 'Killing ngrok...' );
-	return ngrok.kill();
+	return await ngrok.kill();
 }
 
 // ------------------------------------
@@ -166,8 +166,7 @@ function handleExit() {
 	console.log( '--- ' );
 
 	return new Promise( ( resolve, reject ) => {
-		ngrokKill();
-		startRollbackProcess().then( res => {
+		ngrokKill().then(startRollbackProcess).then( res => {
 			return resolve;
 		} );
 	} );

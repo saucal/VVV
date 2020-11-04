@@ -1,2 +1,2 @@
 #!/bin/sh
-node /etc/vvv-ngrok/ngrok.js
+node /etc/vvv-ngrok/ngrok.js "$@"

@@ -27,15 +27,23 @@ var siteData = {};
 // ------------------------------------
 
 async function nginxPatching() {
-  var path = await execCommand( 'grep -Rl "server_name .*' + getHostFromUrl( siteData.url ) + '.*;" /etc/nginx/custom-sites/' );
-  var res = await execCommand( 'sudo sed -i -E "s#(server_name.*);#\\1 ' + getHostFromUrl( siteData.ngrok.url ) + ';#" "' + path + '"' );
-  var res2 = await execCommand( 'sudo service nginx restart' );
+  try {
+    var path = await execCommand( 'grep -Rl "server_name .*' + getHostFromUrl( siteData.url ) + '.*;" /etc/nginx/custom-sites/' );
+    var res = await execCommand( 'sudo sed -i -E "s#(server_name.*);#\\1 ' + getHostFromUrl( siteData.ngrok.url ) + ';#" "' + path + '"' );
+    var res2 = await execCommand( 'sudo service nginx restart' );
+  } catch( e ) {
+    console.error(e);
+  }
 }
 
 async function nginxUnPatching() {
-  var path = await execCommand( 'grep -Rl "server_name .*' + getHostFromUrl( siteData.url ) + '.*;" /etc/nginx/custom-sites/' );
-  var res = await execCommand( 'sudo sed -i -E "s#(server_name.*) ' + getHostFromUrl( siteData.ngrok.url ) + ';#\\1;#" "' + path + '"' );
-  var res2 = await execCommand( 'sudo service nginx restart' );
+  try {
+    var path = await execCommand( 'grep -Rl "server_name .*' + getHostFromUrl( siteData.url ) + '.*;" /etc/nginx/custom-sites/' );
+    var res = await execCommand( 'sudo sed -i -E "s#(server_name.*) ' + getHostFromUrl( siteData.ngrok.url ) + ';#\\1;#" "' + path + '"' );
+    var res2 = await execCommand( 'sudo service nginx restart' );
+  } catch( e ) {
+    console.error(e);
+  }
 }
 
 function getHostFromUrl(url) {

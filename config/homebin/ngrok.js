@@ -4,6 +4,8 @@ const argv = require('yargs').argv;
 const exec = util.promisify( require( 'child_process' ).exec );
 const ngrok = require( 'ngrok' );
 const { addExitHandler, getExitErrors } = require('shutdown-async');
+const fs = require('fs');
+const tempFile = '/vagrant/vvv-ngrok';
 addExitHandler( handleExit );
 
 // Setup directories
@@ -15,10 +17,9 @@ var siteData = {};
 
 (async function() {
   // Check rollback argument
-  if ( argv.rollback || argv.r ) {
+  if( fs.existsSync(tempFile) ) {
     await startRollbackProcess();
-    return;
-  } 
+  }
   
   siteData = await getCurrentInfo();
   main()
@@ -58,6 +59,7 @@ async function getCurrentInfo() {
     url: currentUrl,
     host: currentHost,
     port: currentUrl.indexOf('https') >= 0 ? 443 : 80,
+    path: currentDir,
     ngrok: {
       subdomain: ( argv.subdomain ) ? argv.subdomain : false
     }
@@ -69,8 +71,16 @@ function main() {
 }
 
 async function startRollbackProcess() {
-	console.log( 'Rockback process...' );
-	return await rollbackUrls();
+  if( ! fs.existsSync(tempFile) ) {
+    return;
+  }
+  siteData = JSON.parse( fs.readFileSync(tempFile) );
+  process.chdir( siteData.path );
+  console.log( 'Rockback process...' );
+  await rollbackUrls();
+  fs.unlinkSync( tempFile );
+  process.chdir( currentDir );
+  siteData = {};
 }
 
 // ------------------------------------
@@ -159,6 +169,8 @@ async function ngrokConnect() {
   siteData.ngrok.monitor = monitor;
   siteData.ngrok.subdomain = url.split('//')[1].split('.')[0];
 
+  fs.writeFileSync( tempFile, JSON.stringify( siteData ) );
+
 	return siteData;
 }
 
@@ -174,7 +186,8 @@ function handleExit() {
 	console.log( '--- ' );
 
 	return new Promise( ( resolve, reject ) => {
-		ngrokKill().then(startRollbackProcess).then( res => {
+		ngrokKill().then(rollbackUrls).then( res => {
+      fs.unlinkSync( tempFile );
 			return resolve;
 		} );
 	} );

@@ -6,7 +6,30 @@ permalink: /docs/en-US/changelog/
 
 # Changelog
 
-## 3.5.x ( 2020 TBA )
+## 3.6.x ( 2021 )
+
+### Enhancements
+
+* Beautify the PHP debug switcher script
+* Support for basic formatting tags in `vvv_warn` `vvv_error` `vvv_info` and `vvv_success`
+* A new `vvv_output` and `vvv_format_output` bash functions
+* Minor refactors and colours added to the main provisioner
+* Improved output of backup and import scripts
+* SHDocs added to core provisioners
+* Improved PHP configuration file installation
+* Adds a `vagrant` command inside the virtual machine to tell users they are still inside the VM and need to exit
+
+### Bug Fixes
+
+* Fixed the user of `vvv_warn` `vvv_success` `vvv_error` and `vvv_info` outside of provisioners
+* Don't try to install shyaml if it's already installed
+* Global composer packages were only updated when composer itself was updated
+* Skip the WordPress unit tests database when running backups
+* Don't back up databases that have no tables
+* Xdebug deprecated configuration option warnings fixed
+* Use HTTPS instead of SSH for WP CLI Doctor subcommand installation
+
+## 3.5.1 ( 2020 December 11th )
 
 ### Enhancements
 
@@ -15,15 +38,21 @@ permalink: /docs/en-US/changelog/
 * Added `box-cleanup.sh` and `box-minimize.sh` scripts. Run these before creating a vagrant box to reduce disk size. These are only intended for box file creation.
 * Prevent use of sudo vagrant up ( #2215 )
 * Major refactor of the main provisioner, and introduction of a hook system to be used while provisioning ( #2230, #2238 )
-* Support for cloning git repositories into sites via `config.yml` ( #2247 )
+* Support for cloning git repositories into site folders via `config/config.yml` ( #2247 )
 * Install WP-CLI doctor package ( #2051 )
-* Enhanced database backup terminal output ( #2256 ) 
-* Sites with no `hosts` defined will now default to `{sitename}.test` ( #2267 ) 
+* Enhanced database backup terminal output ( #2256 )
+* Sites with no `hosts` defined will now default to `{sitename}.test` ( #2267 )
+* Enhanced pre/post vagrant up and provision messages ( #2306 )
+* More warnings for people who use `sudo vagrant` commands ( do not use sudo ) ( #2306 )
+* If the VM was created by a root user, `/vagrant/provisioned_as_root` is now created ( #2306 )
+* The default version of PHP was upgraded to v7.3 ( #2307 )
+* Only install the specific version of PHP Pcov we need, rather than all versions ( #2310 )
 
 ### Deprecations
 
 * SVN repository upgrade searches have been moved to a utility. Previous versions of VVV would search 5 folders deep for svn repositories that needed upgrading. If  you still need this, add the `svn-folder-upgrade` core utility. This change can speed up provisioning by 5-10+ seconds on large installations.
 * In the future the dashboard options will be deprecated. Custom dashboards should instead use site provisioners, allowing them to run provisioners, make custom Nginx configs, and have multiple dashboards if desired.
+* Some people use `sudo` when running vagrant commands with VVV, ***they should stop, do not use `sudo`***, and immediatley back up their data. Future VVV versions will assume that when running with `sudo` that the user is trying to recover databases in preparation for a `vagrant destroy`. This includes skipping the provisioning of sites, limiting the available features, and very annoying and prominent warnings. Users who intend to continue using `sudo` for everyday development should expect a painful experience if they do not try to recover. Feel free to ask for help in github or the VVV slack.
 
 ### Bug Fixes
 

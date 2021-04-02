@@ -3,7 +3,16 @@
 set -eo pipefail
 
 function nodejs_register_packages() {
-  cp -f "/srv/provision/core/nodejs/sources.list" "/etc/apt/sources.list.d/vvv-nodejs-sources.list"
+  local OSID=$(lsb_release --id --short)
+  local OSCODENAME=$(lsb_release --codename --short)
+  local APTSOURCE="/srv/provision/core/nodejs/sources-${OSID,,}-${OSCODENAME,,}.list"
+  if [ -f "${APTSOURCE}" ]; then
+    cp -f "${APTSOURCE}" "/etc/apt/sources.list.d/vvv-nodejs-sources.list"
+  else
+    vvv_error " ! VVV could not copy an Apt source file ( ${APTSOURCE} ), the current OS/Version (${OSID,,}-${OSCODENAME,,}) combination is unavailable"
+  fi
+
+  cp -f "/srv/provision/core/nodejs/nodesource-ppa-pin" "/etc/apt/preferences.d/nodesource-ppa-pin"
 
   if ! vvv_apt_keys_has 'NodeSource'; then
     # Retrieve the NodeJS signing key from nodesource.com
@@ -32,10 +41,13 @@ function reinstall_node() {
 }
 
 function node_setup() {
-  if [[ $(nodejs -v | sed -ne 's/[^0-9]*\(\([0-9]\.\)\{0,4\}[0-9][^.]\).*/\1/p') != '14' ]]; then
-    vvv_info " * Migrating to Node v14."
-    reinstall_node
+  if [[ -f "/usr/bin/node" ]]; then
+    if [[ $(node -v | sed -ne 's/[^0-9]*\(\([0-9]\.\)\{0,4\}[0-9][^.]\).*/\1/p') != '14' ]]; then
+      vvv_info " * Migrating to Node v14."
+      reinstall_node
+    fi
   fi
+
   if [[ ! -f "/usr/bin/npm" ]]; then
     vvv_warn " ! npm is missing in /usr/bin, reinstalling Node"
     reinstall_node

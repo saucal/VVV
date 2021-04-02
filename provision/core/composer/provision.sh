@@ -21,6 +21,7 @@ function composer_setup() {
   export COMPOSER_RUNTIME_ENV="vagrant"
 
   vvv_info " * Checking Composer is installed"
+  which composer
   if [[ -n "$(which composer)" ]]; then
     vvv_info " * Installing Composer..."
     curl -sS "https://getcomposer.org/installer" | php

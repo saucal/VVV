@@ -48,7 +48,7 @@ export VVV_PACKAGE_REMOVAL_LIST=()
 # . "/srv/provision/core/mariadb/provision.sh"
 # . "/srv/provision/core/postfix/provision.sh"
 # . "/srv/provision/core/nginx/provision.sh"
-. "/srv/provision/core/php/provision.sh"
+# . "/srv/provision/core/php/provision.sh"
 . "/srv/provision/core/composer/provision.sh"
 # . "/srv/provision/core/nodejs/provision.sh"
 # . "/srv/provision/core/grunt/provision.sh"

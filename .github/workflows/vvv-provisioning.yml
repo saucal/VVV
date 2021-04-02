@@ -27,8 +27,8 @@ jobs:
       - name: Create Vagrant Like Environment
         run: |
           # uninstall pre installed packages (to test if utilities work)
-          sudo apt-get -q --autoremove --purge remove php*
-          sudo apt-get -q autoclean
+          #sudo apt-get -q --autoremove --purge remove php*
+          #sudo apt-get -q autoclean
 
           # create vagrant user
           sudo groupadd -g 2000 vagrant

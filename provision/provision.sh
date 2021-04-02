@@ -42,19 +42,19 @@ export VVV_PACKAGE_LIST=()
 export VVV_PACKAGE_REMOVAL_LIST=()
 
 . "/srv/provision/core/env.sh"
-. '/srv/provision/core/deprecated.sh'
-. "/srv/provision/core/vvv/provision.sh"
-. "/srv/provision/core/git/provision.sh"
-. "/srv/provision/core/mariadb/provision.sh"
-. "/srv/provision/core/postfix/provision.sh"
-. "/srv/provision/core/nginx/provision.sh"
+# . '/srv/provision/core/deprecated.sh'
+# . "/srv/provision/core/vvv/provision.sh"
+# . "/srv/provision/core/git/provision.sh"
+# . "/srv/provision/core/mariadb/provision.sh"
+# . "/srv/provision/core/postfix/provision.sh"
+# . "/srv/provision/core/nginx/provision.sh"
 . "/srv/provision/core/php/provision.sh"
 . "/srv/provision/core/composer/provision.sh"
-. "/srv/provision/core/nodejs/provision.sh"
-. "/srv/provision/core/grunt/provision.sh"
-. "/srv/provision/core/mailhog/provision.sh"
-. "/srv/provision/core/wp-cli/provision.sh"
-. "/srv/provision/core/phpcs/provision.sh"
+# . "/srv/provision/core/nodejs/provision.sh"
+# . "/srv/provision/core/grunt/provision.sh"
+# . "/srv/provision/core/mailhog/provision.sh"
+# . "/srv/provision/core/wp-cli/provision.sh"
+# . "/srv/provision/core/phpcs/provision.sh"
 
 ### SCRIPT
 #set -xv

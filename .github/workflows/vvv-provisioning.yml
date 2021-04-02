@@ -62,26 +62,8 @@ jobs:
           vvv_symlink "$GITHUB_WORKSPACE/log/provisioners" "/var/log/provisioners"
 
       # Runs the provisioners in the expected order
-      - name: Run provison-pre.sh
-        run: sudo bash -c '. "/srv/provision/tests/provisioners.sh" && pre_hook'
-
       - name: Run provison.sh
         run: sudo bash -c '. "/srv/provision/tests/provisioners.sh" && provision_main'
-
-      - name: Run provison-dashboard.sh
-        run: sudo bash -c '. "/srv/provision/tests/provisioners.sh" && provision_dashboard'
-
-      - name: Run provison-utility-source.sh
-        run: sudo bash -c '. "/srv/provision/tests/provisioners.sh" && provision_utility_sources'
-
-      - name: Run provison-utility.sh
-        run: sudo bash -c '. "/srv/provision/tests/provisioners.sh" && provision_utilities'
-
-      - name: Run provison-site.sh
-        run: sudo bash -c '. "/srv/provision/tests/provisioners.sh" && provision_sites'
-
-      - name: Run provison-post.sh
-        run: sudo bash -c '. "/srv/provision/tests/provisioners.sh" && post_hook'
 
       # At this point, we would run some extra tests
       # TODO: Ideas
